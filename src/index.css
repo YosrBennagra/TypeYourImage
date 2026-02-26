@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Checkerboard pattern for transparency preview ─────────────── */
+.checkerboard {
+  background-image:
+    linear-gradient(45deg, #27272a 25%, transparent 25%),
+    linear-gradient(-45deg, #27272a 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #27272a 75%),
+    linear-gradient(-45deg, transparent 75%, #27272a 75%);
+  background-size: 12px 12px;
+  background-position:
+    0 0,
+    0 6px,
+    6px -6px,
+    -6px 0px;
+  background-color: #18181b;
+}
+
+/* ── Drop zone hover ───────────────────────────────────────────── */
+.dropzone-active {
+  border-color: #00f0ff !important;
+  background-color: rgba(0, 240, 255, 0.04) !important;
+}
+
+/* ── Step indicator active gradient ────────────────────────────── */
+.step-active {
+  background: linear-gradient(135deg, #00f0ff, #b44aff);
+}
+
+/* ── Clean transitions ─────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, opacity, color;
+  transition-duration: 150ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* ── Selection ─────────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 240, 255, 0.2);
+  color: #e4e4e7;
+}
+
+/* ── Format card ───────────────────────────────────────────────── */
+.format-card {
+  transition: all 0.15s ease;
+}
+.format-card:hover {
+  border-color: rgba(0, 240, 255, 0.3);
+}
+.format-card.selected {
+  border-color: #00f0ff;
+  background-color: rgba(0, 240, 255, 0.06);
+}
+
+/* ── Quality slider ────────────────────────────────────────────── */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: #3f3f46;
+  outline: none;
+}
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #00f0ff;
+  cursor: pointer;
+  border: 2px solid #18181b;
+}
+input[type='range']::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #00f0ff;
+  cursor: pointer;
+  border: 2px solid #18181b;
+}
+
+/* ── Spinner animation ─────────────────────────────────────────── */
+@keyframes spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.animate-spinner {
+  animation: spinner 1s linear infinite;
+}
