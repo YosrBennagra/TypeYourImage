@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question / Discussion
+    url: https://github.com/YosrBennagra/TypeYourImage/discussions
+    about: Ask questions and discuss ideas in GitHub Discussions
+  - name: Security Vulnerability
+    url: https://github.com/YosrBennagra/TypeYourImage/security/policy
+    about: Report security vulnerabilities privately (do not file a public issue)

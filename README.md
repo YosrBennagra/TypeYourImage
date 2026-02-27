@@ -1,159 +1,150 @@
+﻿<div align="center">
+
 # TypeYourImage
 
-Free online image format converter — upload, preview, convert between PNG, JPG, WebP, GIF, BMP, and more. **100% client-side** — your files never leave your browser.
+**Free online image format converter - upload, preview, convert, and download.**
 
-Live: [tym.veinpal.com](https://tym.veinpal.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
+
+[**Live Demo**](https://tym.veinpal.com) | [Report Bug](https://github.com/YosrBennagra/TypeYourImage/issues/new?template=bug_report.yml) | [Request Feature](https://github.com/YosrBennagra/TypeYourImage/issues/new?template=feature_request.yml)
+
+</div>
 
 ---
+
+## Overview
+
+TypeYourImage converts images between PNG, JPG, WebP, GIF, and BMP formats. **100% client-side** - your files never leave your browser.
+
+### How It Works
+
+1. **Upload** any common image format (PNG, JPG/JPEG, WebP, GIF, SVG, BMP)
+2. **Preview** the source image with dimensions and file size
+3. **Select** an output format from the visual grid
+4. **Adjust** quality for lossy formats (JPG, WebP)
+5. **Download** the converted file instantly
 
 ## Features
 
-- **Upload** any common image format (PNG, JPG/JPEG, WebP, GIF, SVG, BMP)
-- **Preview** the source image with dimensions and file size
-- **Select** an output format from a visual grid
-- **Adjust quality** for lossy formats (JPG, WebP)
+- **Drag and drop** or click to browse
+- **Preview** source image with dimensions and file size
+- **Visual format selector** with format details
+- **Quality slider** for lossy formats (JPG, WebP)
 - **Transparency warnings** when converting alpha images to non-alpha formats
-- **Download** the converted file instantly
 - **Convert again** to a different format without re-uploading
-- Clean, professional dark UI with responsive grid layout
+- **100% client-side** - images never leave your browser
 
-## Tech Stack
+## Supported Formats
 
-- **Vite** + **React 19** + **TypeScript**
-- **Tailwind CSS** for styling
-- 100% client-side Canvas API conversion (no server required)
+| Format | Input | Output | Transparency | Quality Control |
+| --- | --- | --- | --- | --- |
+| PNG | Yes | Yes | Yes | No |
+| JPG/JPEG | Yes | Yes | No | Yes |
+| WebP | Yes | Yes | Yes | Yes |
+| GIF | Yes | Yes | Limited | No |
+| SVG | Yes | No | Yes | - |
+| BMP | Yes | Yes | No | No |
 
----
-
-## Getting Started
+## Quick Start
 
 ### Prerequisites
 
 - **Node.js** >= 18
 - **pnpm** >= 9
 
-### Install & Run
+### Installation
 
-```bash
+`ash
+git clone https://github.com/YosrBennagra/TypeYourImage.git
 cd TypeYourImage
 pnpm install
 pnpm dev
-```
+`
 
-Open [http://localhost:5174](http://localhost:5174) in your browser.
+Opens at http://localhost:5174.
 
-### Build for Production
+### Production Build
 
-```bash
+`ash
 pnpm build
 pnpm preview
-```
+`
 
-### Lint & Typecheck
+## Scripts
 
-```bash
-pnpm lint
-pnpm typecheck
-```
+| Command | Description |
+| --- | --- |
+| pnpm dev | Start development server |
+| pnpm build | Production build |
+| pnpm preview | Serve production build locally |
+| pnpm lint | Run ESLint |
+| pnpm typecheck | TypeScript type checking |
+| pnpm format | Format code with Prettier |
 
----
+## Tech Stack
 
-## Branching Workflow
-
-Same strategy as the Veinpal monorepo:
-
-```
-main          ← production (deployed to Vercel)
-  └─ dev      ← integration / staging
-      └─ feature/<name>   ← feature work
-      └─ fix/<name>       ← bug fixes
-```
-
-### Rules
-
-1. **`main`** = production. Only merge from `dev` (or hotfix branches).
-2. **`dev`** = integration. Feature branches merge here first.
-3. **Feature branches** are created from `dev` and merged back into `dev`.
-4. **Hotfix branches** are created from `main` and merged into both `main` and `dev`.
-
-### Conventional Commits
-
-```
-feat(converter): add WebP quality slider
-fix(upload): handle SVG viewBox dimensions
-chore: update dependencies
-docs: add deployment steps
-```
-
----
-
-## Deployment
-
-### Deploy to Vercel
-
-```bash
-# 1. Install Vercel CLI
-pnpm add -g vercel
-
-# 2. Link the project (first time only)
-cd TypeYourImage
-vercel link
-# → Select your Vercel team/account
-# → Create a new project named "typeyourimage"
-
-# 3. Deploy to preview
-vercel
-
-# 4. Deploy to production
-vercel --prod
-```
-
-### Custom Domain Setup (tym.veinpal.com)
-
-1. In the Vercel dashboard, go to **Project Settings → Domains**.
-2. Add `tym.veinpal.com`.
-3. In your DNS provider, add a **CNAME** record:
-   - **Name**: `tym`
-   - **Value**: `cname.vercel-dns.com`
-4. Vercel will auto-provision an SSL certificate.
-
-Alternatively via CLI:
-
-```bash
-vercel domains add tym.veinpal.com
-```
-
----
+| Technology | Purpose |
+| --- | --- |
+| [Vite](https://vite.dev) | Fast dev server and bundler |
+| [React 19](https://react.dev) | UI framework |
+| [TypeScript](https://www.typescriptlang.org) | Type safety |
+| [Tailwind CSS](https://tailwindcss.com) | Utility-first styling |
 
 ## Project Structure
 
-```
+`
 TypeYourImage/
-├── index.html                 # HTML entry
-├── package.json               # Dependencies & scripts
-├── vite.config.ts             # Vite configuration
-├── tailwind.config.ts         # Tailwind theme
-├── tsconfig.json              # TypeScript config
-├── vercel.json                # Vercel deployment config
-├── eslint.config.js           # ESLint flat config
-├── src/
-│   ├── main.tsx               # React entry
-│   ├── App.tsx                # Main application component
-│   ├── index.css              # Global styles + Tailwind
-│   ├── lib/
-│   │   ├── constants.ts       # Format definitions, types
-│   │   └── converter.ts       # Image load, convert, download
-│   └── components/
-│       ├── drop-zone.tsx      # Drag-and-drop upload area
-│       ├── image-preview.tsx  # Source image preview card
-│       ├── format-selector.tsx# Output format grid
-│       ├── quality-slider.tsx # Quality control for lossy formats
-│       ├── step-indicator.tsx # Upload → Configure → Download
-│       ├── format-notes.tsx   # Transparency & format warnings
-│       ├── conversion-result.tsx # Success state + download
-│       └── footer.tsx         # Privacy badge + links
-```
++-- src/
+|   +-- components/       # React components
+|   |   +-- conversion-result.tsx
+|   |   +-- drop-zone.tsx
+|   |   +-- footer.tsx
+|   |   +-- format-notes.tsx
+|   |   +-- format-selector.tsx
+|   |   +-- image-preview.tsx
+|   |   +-- quality-slider.tsx
+|   |   +-- step-indicator.tsx
+|   +-- lib/              # Utilities
+|   |   +-- constants.ts
+|   |   +-- converter.ts
+|   +-- App.tsx           # Main application
+|   +-- index.css         # Global styles
+|   +-- main.tsx          # Entry point
++-- index.html            # HTML entry
+`
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](./CONTRIBUTING.md) for details.
+
+### Development Workflow
+
+1. Fork the repository
+2. Create a feature branch: git checkout -b feat/my-feature
+3. Make your changes
+4. Run checks: pnpm lint && pnpm typecheck && pnpm build
+5. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
+6. Push and open a Pull Request
+
+## Support
+
+- [GitHub Discussions](https://github.com/YosrBennagra/TypeYourImage/discussions) - Questions
+- [Bug Reports](https://github.com/YosrBennagra/TypeYourImage/issues/new?template=bug_report.yml)
+- [Feature Requests](https://github.com/YosrBennagra/TypeYourImage/issues/new?template=feature_request.yml)
+
+## Sponsors
+
+- [GitHub Sponsors](https://github.com/sponsors/YosrBennagra)
+- [Buy Me a Coffee](https://buymeacoffee.com/veinpal)
 
 ## License
 
-MIT
+MIT License - see [LICENSE](./LICENSE) for details.
+
+---
+
+<div align="center">
+Made with love by <a href="https://github.com/YosrBennagra">Veinpal</a>
+</div>

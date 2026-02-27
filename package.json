@@ -1,9 +1,39 @@
 {
   "name": "typeyourimage",
-  "private": true,
+  "private": false,
   "version": "1.0.0",
   "type": "module",
   "description": "Free online image format converter — upload, preview, convert, and download. 100% client-side.",
+  "author": {
+    "name": "Veinpal",
+    "url": "https://github.com/YosrBennagra"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YosrBennagra/TypeYourImage.git"
+  },
+  "bugs": {
+    "url": "https://github.com/YosrBennagra/TypeYourImage/issues"
+  },
+  "homepage": "https://tym.veinpal.com",
+  "keywords": [
+    "image",
+    "converter",
+    "format",
+    "png",
+    "jpg",
+    "webp",
+    "gif",
+    "image-converter",
+    "react",
+    "typescript",
+    "vite"
+  ],
+  "engines": {
+    "node": ">=18",
+    "pnpm": ">=9"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
