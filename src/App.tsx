@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { FiRefreshCw, FiZap, FiLoader } from 'react-icons/fi';
+import { Analytics } from '@vercel/analytics/react';
 import { type OutputFormat, type AppStatus, DEFAULT_QUALITY } from './lib/constants';
 import { loadImage, convertImage, downloadBlob, getBaseName } from './lib/converter';
 import { DropZone } from './components/drop-zone';
@@ -360,6 +361,7 @@ export default function App() {
       <footer className="shrink-0 border-t border-zinc-800/60 bg-zinc-950/80 h-10">
         <Footer />
       </footer>
+      <Analytics />
     </div>
   );
 }
