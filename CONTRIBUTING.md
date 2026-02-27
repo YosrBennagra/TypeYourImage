@@ -60,7 +60,7 @@ The app opens at `http://localhost:5174`.
 We follow the **Git Flow** model:
 
 ```
-main              ← Production (deployed to tym.veinpal.com)
+main              ← Production (deployed to tyimage.veinpal.com)
 ├── develop       ← Integration branch
 │   ├── feat/*    ← New features
 │   ├── fix/*     ← Bug fixes
