@@ -11,15 +11,15 @@ interface SourcePreviewProps {
 
 export function SourcePreview({ file, previewUrl, category, dimensions }: SourcePreviewProps) {
   return (
-    <div className="flex flex-col gap-3 h-full">
+    <div className="flex flex-col gap-4 flex-1 min-h-0">
       {/* Preview */}
-      <div className="flex-1 min-h-0 flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-zinc-800">
+      <div className="flex-1 min-h-0 flex items-center justify-center rounded-lg overflow-hidden bg-white/[0.02] border border-white/[0.04]">
         {category === 'image' && (
           <img
             src={previewUrl}
             alt="Preview"
             className="max-w-full max-h-full object-contain"
-            style={{ maxHeight: '160px' }}
+            style={{ maxHeight: '180px' }}
           />
         )}
         {category === 'video' && (
@@ -27,17 +27,17 @@ export function SourcePreview({ file, previewUrl, category, dimensions }: Source
             src={previewUrl}
             controls
             className="max-w-full max-h-full object-contain"
-            style={{ maxHeight: '160px' }}
+            style={{ maxHeight: '180px' }}
           >
             <track kind="captions" />
           </video>
         )}
         {category === 'audio' && (
-          <div className="flex flex-col items-center gap-3 p-4 w-full">
-            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-neon-purple/10 border border-neon-purple/30">
-              <FiMusic className="w-6 h-6 text-neon-purple" />
+          <div className="flex flex-col items-center gap-4 p-6 w-full">
+            <div className="w-12 h-12 rounded-full bg-neon-purple/[0.08] border border-neon-purple/20 flex items-center justify-center">
+              <FiMusic className="w-5 h-5 text-neon-purple" />
             </div>
-            <audio src={previewUrl} controls className="w-full max-w-[220px]">
+            <audio src={previewUrl} controls className="w-full max-w-[240px]">
               <track kind="captions" />
             </audio>
           </div>
@@ -45,14 +45,14 @@ export function SourcePreview({ file, previewUrl, category, dimensions }: Source
       </div>
 
       {/* File info */}
-      <div className="flex flex-col gap-1.5">
+      <div className="space-y-2">
         <div className="flex items-center gap-2 min-w-0">
-          <FiFile className="w-3.5 h-3.5 text-neon-cyan shrink-0" />
-          <span className="text-xs font-mono text-zinc-300 truncate" title={file.name}>
+          <FiFile className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+          <span className="text-sm text-zinc-300 truncate" title={file.name}>
             {file.name}
           </span>
         </div>
-        <div className="flex items-center gap-3 text-[11px] font-mono text-zinc-500 flex-wrap">
+        <div className="flex items-center gap-3 text-xs text-zinc-500">
           <span className="flex items-center gap-1">
             {category === 'image' ? (
               <FiImage className="w-3 h-3" />
@@ -61,15 +61,15 @@ export function SourcePreview({ file, previewUrl, category, dimensions }: Source
             ) : (
               <FiMusic className="w-3 h-3" />
             )}
-            {formatFileSize(file.size)}
+            <span className="font-mono">{formatFileSize(file.size)}</span>
           </span>
           {dimensions && (
             <span className="flex items-center gap-1">
               <FiMaximize className="w-3 h-3" />
-              {dimensions.width} × {dimensions.height}
+              <span className="font-mono">{dimensions.width} × {dimensions.height}</span>
             </span>
           )}
-          <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] uppercase">
+          <span className="px-1.5 py-0.5 rounded bg-white/[0.04] text-zinc-500 text-[10px] font-mono uppercase">
             {file.name.split('.').pop()}
           </span>
         </div>

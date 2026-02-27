@@ -2,89 +2,132 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ── Checkerboard pattern for transparency preview ─────────────── */
-.checkerboard {
-  background-image:
-    linear-gradient(45deg, #27272a 25%, transparent 25%),
-    linear-gradient(-45deg, #27272a 25%, transparent 25%),
-    linear-gradient(45deg, transparent 75%, #27272a 75%),
-    linear-gradient(-45deg, transparent 75%, #27272a 75%);
-  background-size: 12px 12px;
-  background-position:
-    0 0,
-    0 6px,
-    6px -6px,
-    -6px 0px;
-  background-color: #18181b;
-}
-
-/* ── Drop zone hover ───────────────────────────────────────────── */
-.dropzone-active {
-  border-color: #00f0ff !important;
-  background-color: rgba(0, 240, 255, 0.04) !important;
-}
-
-/* ── Step indicator active gradient ────────────────────────────── */
-.step-active {
-  background: linear-gradient(135deg, #00f0ff, #b44aff);
-}
-
-/* ── Category tab glow on active ───────────────────────────────── */
-.category-active {
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
-}
-
-/* ── Clean transitions ─────────────────────────────────────────── */
-*,
-*::before,
-*::after {
-  transition-property: background-color, border-color, opacity, color;
-  transition-duration: 150ms;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* ── Scrollbar ─────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #3f3f46;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
-}
-
-/* ── Selection ─────────────────────────────────────────────────── */
-::selection {
-  background: rgba(0, 240, 255, 0.2);
+/* ── Base ─────────────────────────────────────────────────────── */
+body {
+  background-color: #09090b;
   color: #e4e4e7;
 }
 
-/* ── Format card ───────────────────────────────────────────────── */
-.format-card {
-  transition: all 0.15s ease;
-}
-.format-card:hover {
-  border-color: rgba(0, 240, 255, 0.3);
-}
-.format-card.selected {
-  border-color: #00f0ff;
-  background-color: rgba(0, 240, 255, 0.06);
+/* ── Glass card ───────────────────────────────────────────────── */
+.glass-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
 }
 
-/* ── Quality slider ────────────────────────────────────────────── */
+.glass-card-success {
+  background: rgba(52, 211, 153, 0.025);
+  border: 1px solid rgba(52, 211, 153, 0.2);
+  border-radius: 12px;
+}
+
+.glass-card-error {
+  background: rgba(248, 113, 113, 0.025);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 12px;
+}
+
+/* ── Section title ────────────────────────────────────────────── */
+.section-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #71717a;
+}
+
+/* ── Convert button ───────────────────────────────────────────── */
+.convert-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  background: linear-gradient(135deg, #00f0ff, #a855f7);
+  color: #09090b;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.convert-btn:hover:not(:disabled) {
+  opacity: 0.92;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.12);
+}
+
+.convert-btn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+  background: #27272a;
+  color: #71717a;
+  box-shadow: none;
+}
+
+/* ── Checkerboard ─────────────────────────────────────────────── */
+.checkerboard {
+  background-image:
+    linear-gradient(45deg, #1a1a1e 25%, transparent 25%),
+    linear-gradient(-45deg, #1a1a1e 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #1a1a1e 75%),
+    linear-gradient(-45deg, transparent 75%, #1a1a1e 75%);
+  background-size: 12px 12px;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-color: #111114;
+}
+
+/* ── Drop zone ────────────────────────────────────────────────── */
+.drop-zone {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.01);
+  transition: all 0.2s ease;
+}
+
+.drop-zone:hover {
+  border-color: rgba(0, 240, 255, 0.15);
+  background: rgba(0, 240, 255, 0.015);
+}
+
+.drop-zone.drag-over {
+  border-color: rgba(0, 240, 255, 0.4);
+  background: rgba(0, 240, 255, 0.03);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.05);
+}
+
+/* ── Format card ──────────────────────────────────────────────── */
+.format-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.format-card:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.format-card.selected {
+  border-color: rgba(0, 240, 255, 0.35);
+  background: rgba(0, 240, 255, 0.05);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.05);
+}
+
+/* ── Quality slider ───────────────────────────────────────────── */
 input[type='range'] {
   -webkit-appearance: none;
   appearance: none;
   height: 4px;
   border-radius: 2px;
-  background: #3f3f46;
+  background: #27272a;
   outline: none;
 }
+
 input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -93,45 +136,62 @@ input[type='range']::-webkit-slider-thumb {
   border-radius: 50%;
   background: #00f0ff;
   cursor: pointer;
-  border: 2px solid #18181b;
+  border: 2px solid #09090b;
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.25);
 }
+
 input[type='range']::-moz-range-thumb {
   width: 16px;
   height: 16px;
   border-radius: 50%;
   background: #00f0ff;
   cursor: pointer;
-  border: 2px solid #18181b;
+  border: 2px solid #09090b;
 }
 
-/* ── Audio element styling ─────────────────────────────────────── */
+/* ── Scrollbar ────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* ── Selection ────────────────────────────────────────────────── */
+::selection {
+  background: rgba(0, 240, 255, 0.15);
+  color: #e4e4e7;
+}
+
+/* ── Audio ────────────────────────────────────────────────────── */
 audio {
   height: 32px;
   filter: invert(1) hue-rotate(180deg);
 }
-audio::-webkit-media-controls-panel {
-  background: transparent;
-}
 
-/* ── Spinner animation ─────────────────────────────────────────── */
+/* ── Spinner ──────────────────────────────────────────────────── */
 @keyframes spinner {
   to {
     transform: rotate(360deg);
   }
 }
+
 .animate-spinner {
   animation: spinner 1s linear infinite;
 }
 
-/* ── Pulse glow for loading states ─────────────────────────────── */
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
-  }
-}
-.animate-pulse-glow {
-  animation: pulse-glow 2s ease-in-out infinite;
+/* ── Transitions ──────────────────────────────────────────────── */
+button,
+a {
+  transition: all 0.15s ease;
 }

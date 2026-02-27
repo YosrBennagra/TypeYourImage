@@ -87,16 +87,16 @@ export default function App() {
       setConversionProgress(0);
 
       try {
-        // Detect category and auto-switch
         const detectedCategory = detectCategoryFromFile(file) ?? category;
         if (detectedCategory !== category) {
           setCategory(detectedCategory);
         }
 
-        // File size warning
         const catConfig = getCategoryConfig(detectedCategory);
         if (file.size > catConfig.maxSizeMB * 1024 * 1024) {
-          setError(`File exceeds ${catConfig.maxSizeMB} MB limit for ${catConfig.label.toLowerCase()} conversion.`);
+          setError(
+            `File exceeds ${catConfig.maxSizeMB} MB limit for ${catConfig.label.toLowerCase()} conversion.`,
+          );
           setStatus('error');
           return;
         }
@@ -125,7 +125,6 @@ export default function App() {
             previewUrl,
           });
 
-          // Pre-load FFmpeg in background for video/audio
           if (!isFFmpegLoaded()) {
             getFFmpeg().catch(() => {});
           }
@@ -155,7 +154,6 @@ export default function App() {
         setStatus('converting');
         blob = await convertImage(source.imageElement!, selectedFormat, quality);
       } else {
-        // FFmpeg-based conversion (video / audio)
         if (!isFFmpegLoaded()) {
           setStatus('loading-engine');
         }
@@ -175,7 +173,8 @@ export default function App() {
       setResult({ blob, format: selectedFormat });
       setStatus('success');
     } catch (err) {
-      const msg = err instanceof Error ? err.message : `Conversion to ${selectedFormat.label} failed.`;
+      const msg =
+        err instanceof Error ? err.message : `Conversion to ${selectedFormat.label} failed.`;
       setError(msg);
       setStatus('error');
     }
@@ -214,10 +213,10 @@ export default function App() {
     setConversionProgress(0);
   }, []);
 
-  // ── Category change (only when no file is loaded) ────────────
+  // ── Category change ──────────────────────────────────────────
   const handleCategoryChange = useCallback(
     (newCategory: ConverterCategory) => {
-      if (source) return; // Don't switch mid-conversion
+      if (source) return;
       setCategory(newCategory);
     },
     [source],
@@ -227,284 +226,267 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen max-h-screen overflow-hidden">
-      {/* ── Header ──────────────────────────────────────────────── */}
-      <header className="shrink-0 border-b border-zinc-800/60 bg-zinc-950/80 backdrop-blur-sm">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-neon-cyan to-neon-purple">
-              <FiZap className="w-4 h-4 text-zinc-950" />
-            </div>
-            <div>
-              <h1 className="text-sm font-mono font-bold text-zinc-100 tracking-tight">
-                AllYourTypes
-              </h1>
-              <p className="text-[10px] font-mono text-zinc-500">
-                Convert anything, right in your browser
-              </p>
-            </div>
-          </div>
+      {/* ── Ambient glow ─────────────────────────────────────── */}
+      <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
+        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-neon-cyan/[0.03] blur-[100px]" />
+      </div>
 
-          <div className="flex items-center gap-4">
+      {/* ── Header (workspace only) ──────────────────────────── */}
+      {source && (
+        <header className="shrink-0 h-14 border-b border-white/[0.06] bg-zinc-950/80 backdrop-blur-sm flex items-center px-6 relative z-10">
+          <div className="flex items-center gap-2.5">
+            <FiZap className="w-4 h-4 text-neon-cyan" />
+            <span className="text-sm font-semibold tracking-tight">
+              All<span className="text-neon-cyan">Your</span>Types
+            </span>
+          </div>
+          <div className="flex-1 flex justify-center">
             <StepIndicator currentStep={currentStep} />
-            {source && (
-              <button
-                type="button"
-                onClick={handleReset}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-mono text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-zinc-800"
-              >
-                <FiRefreshCw className="w-3 h-3" />
-                New
-              </button>
-            )}
           </div>
-        </div>
-      </header>
+          <button
+            type="button"
+            onClick={handleReset}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
+          >
+            <FiRefreshCw className="w-3.5 h-3.5" />
+            New File
+          </button>
+        </header>
+      )}
 
-      {/* ── Main content ────────────────────────────────────────── */}
-      <main className="flex-1 min-h-0 overflow-auto">
-        <div className="max-w-6xl mx-auto px-4 py-4 h-full">
-          {!source ? (
-            /* ── Upload state ─────────────────────────────────── */
-            <div className="h-full flex items-center justify-center">
-              <div className="w-full max-w-xl flex flex-col gap-5">
-                {/* Category tabs */}
-                <div className="flex justify-center">
-                  <CategoryTabs
-                    active={category}
-                    onChange={handleCategoryChange}
-                    disabled={status === 'uploading'}
-                  />
+      {/* ── Main ─────────────────────────────────────────────── */}
+      <main className="flex-1 min-h-0 relative z-10">
+        {!source ? (
+          /* ── Landing ─────────────────────────────────────── */
+          <div className="h-full flex items-center justify-center">
+            <div className="w-full max-w-lg flex flex-col items-center gap-8 px-4">
+              {/* Brand */}
+              <div className="text-center">
+                <div className="flex items-center justify-center gap-2.5 mb-2">
+                  <div className="w-9 h-9 rounded-lg bg-neon-cyan/[0.08] border border-neon-cyan/20 flex items-center justify-center">
+                    <FiZap className="w-4 h-4 text-neon-cyan" />
+                  </div>
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    All<span className="text-neon-cyan">Your</span>Types
+                  </h1>
                 </div>
+                <p className="text-sm text-zinc-500 mt-1">
+                  Convert files instantly — right in your browser
+                </p>
+              </div>
 
-                {/* Drop zone */}
+              {/* Category tabs */}
+              <CategoryTabs
+                active={category}
+                onChange={handleCategoryChange}
+                disabled={status === 'uploading'}
+              />
+
+              {/* Drop zone */}
+              <div className="w-full">
                 <DropZone
                   category={category}
                   onFileSelected={handleFileSelected}
                   onCategorySwitch={setCategory}
                   disabled={status === 'uploading'}
                 />
+              </div>
 
-                {status === 'uploading' && (
-                  <div className="flex items-center justify-center gap-2 text-xs font-mono text-zinc-400">
-                    <FiLoader className="w-3.5 h-3.5 animate-spinner" />
-                    Loading file...
+              {status === 'uploading' && (
+                <div className="flex items-center gap-2 text-sm text-zinc-500">
+                  <FiLoader className="w-4 h-4 animate-spinner" />
+                  Loading file…
+                </div>
+              )}
+
+              {/* Feature badges */}
+              <FeatureCards />
+            </div>
+          </div>
+        ) : (
+          /* ── Workspace ───────────────────────────────────── */
+          <div className="max-w-5xl mx-auto h-full grid grid-cols-1 lg:grid-cols-12 gap-5 p-5">
+            {/* Left: Source */}
+            <div className="lg:col-span-5">
+              <div className="glass-card h-full p-5 flex flex-col">
+                <h2 className="section-title mb-4">Source File</h2>
+
+                <SourcePreview
+                  file={source.file}
+                  previewUrl={source.previewUrl}
+                  category={source.category}
+                  dimensions={source.dimensions}
+                />
+
+                {showSizeWarning && (
+                  <div className="mt-3 px-3 py-2 rounded-lg bg-neon-yellow/[0.05] border border-neon-yellow/15">
+                    <p className="text-xs text-neon-yellow/70">
+                      Large file — conversion may take a while
+                    </p>
                   </div>
                 )}
 
-                {/* Feature cards */}
-                <FeatureCards />
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className="mt-auto pt-4 text-xs text-zinc-600 hover:text-zinc-300"
+                >
+                  Change file
+                </button>
               </div>
             </div>
-          ) : (
-            /* ── Conversion workspace ─────────────────────────── */
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-full">
-              {/* Left: Source preview */}
-              <div className="lg:col-span-3 flex flex-col">
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 flex flex-col h-full">
-                  <h2 className="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                    Source
-                  </h2>
-                  <SourcePreview
-                    file={source.file}
-                    previewUrl={source.previewUrl}
-                    category={source.category}
-                    dimensions={source.dimensions}
-                  />
 
-                  {showSizeWarning && (
-                    <div className="mt-2 px-2 py-1.5 rounded bg-neon-yellow/5 border border-neon-yellow/20">
-                      <p className="text-[10px] font-mono text-neon-yellow/70">
-                        Large file — conversion may take a while
-                      </p>
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={handleReset}
-                    className="mt-3 text-[11px] font-mono text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
-                  >
-                    Change file
-                  </button>
-                </div>
+            {/* Right: Convert */}
+            <div className="lg:col-span-7 flex flex-col gap-4 overflow-y-auto">
+              {/* Format selector */}
+              <div className="glass-card p-5">
+                <h2 className="section-title mb-4">Output Format</h2>
+                <FormatSelector
+                  category={source.category}
+                  selected={selectedFormat}
+                  onSelect={(fmt) => {
+                    setSelectedFormat(fmt);
+                    setResult(null);
+                    setError(null);
+                    setStatus('ready');
+                  }}
+                  sourceFormat={source.file.type}
+                />
               </div>
 
-              {/* Center: Format selection + options */}
-              <div className="lg:col-span-5 flex flex-col gap-4">
-                <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
-                  <h2 className="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                    Output Format
-                  </h2>
-                  <FormatSelector
-                    category={source.category}
-                    selected={selectedFormat}
-                    onSelect={(fmt) => {
-                      setSelectedFormat(fmt);
-                      setResult(null);
+              {/* Options */}
+              {selectedFormat && (
+                <div className="glass-card p-5 space-y-3">
+                  {selectedFormat.supportsQuality && (
+                    <QualitySlider quality={quality} onChange={setQuality} />
+                  )}
+
+                  {source.category === 'image' && (
+                    <TransparencyNotice
+                      sourceHasAlpha={source.hasAlpha ?? false}
+                      targetFormat={selectedFormat}
+                    />
+                  )}
+
+                  <FormatNotes format={selectedFormat} category={source.category} />
+
+                  {!selectedFormat.supportsQuality && (
+                    <p className="text-xs text-zinc-600">
+                      No quality settings for {selectedFormat.label}.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Convert button */}
+              {selectedFormat && !result && (
+                <button
+                  type="button"
+                  onClick={handleConvert}
+                  disabled={status === 'converting' || status === 'loading-engine'}
+                  className="convert-btn"
+                >
+                  {status === 'loading-engine' ? (
+                    <>
+                      <FiLoader className="w-4 h-4 animate-spinner" />
+                      Loading engine…
+                    </>
+                  ) : status === 'converting' ? (
+                    <>
+                      <FiLoader className="w-4 h-4 animate-spinner" />
+                      Converting…
+                    </>
+                  ) : (
+                    <>
+                      <FiZap className="w-4 h-4" />
+                      Convert to {selectedFormat.label}
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* Progress */}
+              {status === 'converting' && source.category !== 'image' && (
+                <ProgressBar progress={conversionProgress} label="Processing" />
+              )}
+
+              {status === 'loading-engine' && (
+                <p className="text-xs text-zinc-600 text-center">
+                  Downloading engine (~30 MB, one-time)…
+                </p>
+              )}
+
+              {/* Result */}
+              {result && (
+                <div className="glass-card-success p-5">
+                  <ConversionResult
+                    originalSize={source.file.size}
+                    convertedSize={result.blob.size}
+                    format={result.format}
+                    onDownload={handleDownload}
+                    isDownloading={isDownloading}
+                  />
+                  <button
+                    type="button"
+                    onClick={handleConvertAnother}
+                    className="mt-3 w-full text-xs text-zinc-600 hover:text-zinc-300 text-center"
+                  >
+                    Convert to another format
+                  </button>
+                </div>
+              )}
+
+              {/* Error */}
+              {error && (
+                <div className="glass-card-error p-5">
+                  <p className="text-sm text-red-400">{error}</p>
+                  <button
+                    type="button"
+                    onClick={() => {
                       setError(null);
                       setStatus('ready');
                     }}
-                    sourceFormat={source.file.type}
-                  />
+                    className="mt-2 text-xs text-zinc-600 hover:text-zinc-300"
+                  >
+                    Dismiss
+                  </button>
                 </div>
+              )}
 
-                {/* Quality + notes */}
-                {selectedFormat && (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4 flex flex-col gap-3">
-                    <h2 className="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider">
-                      Options
-                    </h2>
-
-                    {selectedFormat.supportsQuality && (
-                      <QualitySlider quality={quality} onChange={setQuality} />
-                    )}
-
-                    {source.category === 'image' && (
-                      <TransparencyNotice
-                        sourceHasAlpha={source.hasAlpha ?? false}
-                        targetFormat={selectedFormat}
-                      />
-                    )}
-
-                    <FormatNotes format={selectedFormat} category={source.category} />
-
-                    {!selectedFormat.supportsQuality && (
-                      <p className="text-[11px] font-mono text-zinc-600">
-                        No quality settings for {selectedFormat.label}.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {/* Right: Action + result */}
-              <div className="lg:col-span-4 flex flex-col gap-4">
-                {/* Convert button */}
-                {selectedFormat && !result && (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
-                    <button
-                      type="button"
-                      onClick={handleConvert}
-                      disabled={status === 'converting' || status === 'loading-engine'}
-                      className={`
-                        flex items-center justify-center gap-2 w-full py-3 rounded-lg
-                        font-mono font-semibold text-sm
-                        ${status === 'converting' || status === 'loading-engine'
-                          ? 'bg-zinc-800 text-zinc-400 cursor-wait'
-                          : 'bg-gradient-to-r from-neon-cyan to-neon-purple text-zinc-950 hover:opacity-90'}
-                        disabled:opacity-60
-                      `}
-                    >
-                      {status === 'loading-engine' ? (
-                        <>
-                          <FiLoader className="w-4 h-4 animate-spinner" />
-                          Loading engine...
-                        </>
-                      ) : status === 'converting' ? (
-                        <>
-                          <FiLoader className="w-4 h-4 animate-spinner" />
-                          Converting...
-                        </>
-                      ) : (
-                        <>
-                          <FiZap className="w-4 h-4" />
-                          Convert to {selectedFormat.label}
-                        </>
-                      )}
-                    </button>
-
-                    {/* Progress bar for video/audio */}
-                    {status === 'converting' && source.category !== 'image' && (
-                      <div className="mt-3">
-                        <ProgressBar progress={conversionProgress} label="Processing" />
-                      </div>
-                    )}
-
-                    {status === 'loading-engine' && (
-                      <p className="mt-2 text-[10px] font-mono text-zinc-500 text-center">
-                        Downloading conversion engine (~30 MB, one-time)...
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {/* Result */}
-                {result && (
-                  <div className="rounded-xl border border-neon-green/20 bg-neon-green/5 p-4">
-                    <ConversionResult
-                      originalSize={source.file.size}
-                      convertedSize={result.blob.size}
-                      format={result.format}
-                      onDownload={handleDownload}
-                      isDownloading={isDownloading}
-                    />
-
-                    <button
-                      type="button"
-                      onClick={handleConvertAnother}
-                      className="mt-3 w-full text-center text-[11px] font-mono text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
-                    >
-                      Convert to another format
-                    </button>
-                  </div>
-                )}
-
-                {/* Error */}
-                {error && (
-                  <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-4">
-                    <p className="text-sm font-mono text-red-400">{error}</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setError(null);
-                        setStatus('ready');
-                      }}
-                      className="mt-2 text-[11px] font-mono text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                )}
-
-                {/* Converted preview (images only) */}
-                {result && source.category === 'image' && (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
-                    <h2 className="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                      Converted Preview
-                    </h2>
-                    <div className="flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-zinc-800">
-                      <img
-                        src={URL.createObjectURL(result.blob)}
-                        alt="Converted preview"
-                        className="max-w-full max-h-[160px] object-contain"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* Converted preview (video) */}
-                {result && source.category === 'video' && result.format.id !== 'video-gif' && (
-                  <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 p-4">
-                    <h2 className="text-xs font-mono font-semibold text-zinc-400 uppercase tracking-wider mb-3">
-                      Converted Preview
-                    </h2>
-                    <video
+              {/* Converted preview (image) */}
+              {result && source.category === 'image' && (
+                <div className="glass-card p-5">
+                  <h2 className="section-title mb-3">Preview</h2>
+                  <div className="flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-white/[0.04]">
+                    <img
                       src={URL.createObjectURL(result.blob)}
-                      controls
-                      className="max-w-full max-h-[160px] rounded-lg"
-                    >
-                      <track kind="captions" />
-                    </video>
+                      alt="Converted"
+                      className="max-w-full max-h-40 object-contain"
+                    />
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+
+              {/* Converted preview (video) */}
+              {result && source.category === 'video' && result.format.id !== 'video-gif' && (
+                <div className="glass-card p-5">
+                  <h2 className="section-title mb-3">Preview</h2>
+                  <video
+                    src={URL.createObjectURL(result.blob)}
+                    controls
+                    className="max-w-full max-h-40 rounded-lg"
+                  >
+                    <track kind="captions" />
+                  </video>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </main>
 
-      {/* ── Footer ──────────────────────────────────────────────── */}
-      <footer className="shrink-0 border-t border-zinc-800/60 bg-zinc-950/80 h-10">
+      {/* ── Footer ───────────────────────────────────────────── */}
+      <footer className="shrink-0 relative z-10 border-t border-white/[0.04]">
         <Footer />
       </footer>
     </div>

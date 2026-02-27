@@ -10,11 +10,11 @@ export function TransparencyNotice({ sourceHasAlpha, targetFormat }: Transparenc
   if (!sourceHasAlpha || targetFormat.supportsTransparency) return null;
 
   return (
-    <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-neon-yellow/5 border border-neon-yellow/20">
+    <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-neon-yellow/[0.04] border border-neon-yellow/15">
       <FiAlertTriangle className="w-3.5 h-3.5 text-neon-yellow shrink-0 mt-0.5" />
-      <p className="text-[11px] font-mono text-neon-yellow/80 leading-relaxed">
-        {targetFormat.label} does not support transparency. Transparent areas will be filled with a
-        white background.
+      <p className="text-xs text-neon-yellow/70 leading-relaxed">
+        {targetFormat.label} does not support transparency. Transparent areas will use a white
+        background.
       </p>
     </div>
   );
@@ -28,33 +28,38 @@ interface FormatNotesProps {
 export function FormatNotes({ format, category }: FormatNotesProps) {
   const notes: string[] = [];
 
-  // Image-specific notes
   if (category === 'image') {
-    if (format.id === 'gif') notes.push('GIF is limited to 256 colors. Complex images may lose quality.');
+    if (format.id === 'gif')
+      notes.push('GIF is limited to 256 colors. Complex images may lose quality.');
     if (format.id === 'bmp') notes.push('BMP files are uncompressed and can be very large.');
-    if (format.id === 'webp') notes.push('WebP offers 25-35% better compression than JPEG at similar quality.');
+    if (format.id === 'webp')
+      notes.push('WebP offers 25-35% better compression than JPEG at similar quality.');
   }
 
-  // Video-specific notes
   if (category === 'video') {
-    if (format.id === 'video-gif') notes.push('Video will be resized to 480px width and limited to 12 fps for optimal GIF size.');
-    if (format.id === 'webm') notes.push('WebM uses VP8 encoding — great for web use with smaller file sizes.');
-    if (format.id === 'mp4') notes.push('MP4 with H.264 — the most widely compatible video format.');
+    if (format.id === 'video-gif')
+      notes.push('Video will be resized to 480px width at 12 fps.');
+    if (format.id === 'webm')
+      notes.push('WebM uses VP8 — great for web with smaller file sizes.');
+    if (format.id === 'mp4')
+      notes.push('MP4 with H.264 — the most widely compatible format.');
   }
 
-  // Audio-specific notes
   if (category === 'audio') {
-    if (format.id === 'wav') notes.push('WAV files are uncompressed. Output will be significantly larger.');
-    if (format.id === 'flac') notes.push('FLAC provides lossless compression — perfect quality, ~50% smaller than WAV.');
-    if (format.id === 'ogg') notes.push('OGG Vorbis is an open-source format with quality comparable to MP3.');
+    if (format.id === 'wav')
+      notes.push('WAV is uncompressed — output will be significantly larger.');
+    if (format.id === 'flac')
+      notes.push('FLAC provides lossless compression at ~50% of WAV size.');
+    if (format.id === 'ogg')
+      notes.push('OGG Vorbis is open-source with quality comparable to MP3.');
   }
 
   if (notes.length === 0) return null;
 
   return (
-    <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-zinc-900/50 border border-zinc-800">
-      <FiInfo className="w-3.5 h-3.5 text-zinc-500 shrink-0 mt-0.5" />
-      <p className="text-[11px] font-mono text-zinc-500 leading-relaxed">{notes.join(' ')}</p>
+    <div className="flex items-start gap-2 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.04]">
+      <FiInfo className="w-3.5 h-3.5 text-zinc-600 shrink-0 mt-0.5" />
+      <p className="text-xs text-zinc-500 leading-relaxed">{notes.join(' ')}</p>
     </div>
   );
 }

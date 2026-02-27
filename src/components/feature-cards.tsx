@@ -1,36 +1,18 @@
 import { FiShield, FiZap, FiLock } from 'react-icons/fi';
 
 const FEATURES = [
-  {
-    icon: <FiShield className="w-5 h-5 text-neon-green" />,
-    title: '100% Private',
-    description: 'Files never leave your browser',
-  },
-  {
-    icon: <FiZap className="w-5 h-5 text-neon-cyan" />,
-    title: 'Instant Convert',
-    description: 'Powered by WebAssembly',
-  },
-  {
-    icon: <FiLock className="w-5 h-5 text-neon-purple" />,
-    title: 'No Sign-up',
-    description: 'Free, no account needed',
-  },
+  { icon: <FiShield className="w-3.5 h-3.5" />, label: '100% Private' },
+  { icon: <FiZap className="w-3.5 h-3.5" />, label: 'Instant' },
+  { icon: <FiLock className="w-3.5 h-3.5" />, label: 'No Sign-up' },
 ] as const;
 
 export function FeatureCards() {
   return (
-    <div className="flex items-center justify-center gap-6 flex-wrap">
+    <div className="flex items-center justify-center gap-6">
       {FEATURES.map((f) => (
-        <div
-          key={f.title}
-          className="flex items-center gap-2.5 px-4 py-2 rounded-lg bg-zinc-900/40 border border-zinc-800/50"
-        >
-          {f.icon}
-          <div>
-            <p className="text-xs font-mono font-semibold text-zinc-300">{f.title}</p>
-            <p className="text-[10px] font-mono text-zinc-600">{f.description}</p>
-          </div>
+        <div key={f.label} className="flex items-center gap-2 text-xs text-zinc-600">
+          <span className="text-zinc-500">{f.icon}</span>
+          <span>{f.label}</span>
         </div>
       ))}
     </div>

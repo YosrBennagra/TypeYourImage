@@ -32,9 +32,7 @@ export function DropZone({ category, onFileSelected, onCategorySwitch, disabled 
 
   const isValidFile = useCallback(
     (file: File): boolean => {
-      // Check current category first
       if ((config.acceptedTypes as readonly string[]).includes(file.type)) return true;
-      // Auto-detect from any supported category
       return detectCategoryFromFile(file) !== null;
     },
     [config],
@@ -50,7 +48,6 @@ export function DropZone({ category, onFileSelected, onCategorySwitch, disabled 
       const file = e.dataTransfer.files[0];
       if (!file) return;
 
-      // Auto-switch category if file is from a different one
       const detected = detectCategoryFromFile(file);
       if (detected && detected !== category && onCategorySwitch) {
         onCategorySwitch(detected);
@@ -114,52 +111,38 @@ export function DropZone({ category, onFileSelected, onCategorySwitch, disabled 
         if (e.key === 'Enter' || e.key === ' ') handleClick();
       }}
       className={`
-        relative flex flex-col items-center justify-center gap-4
-        w-full h-full min-h-[200px] p-8
-        border-2 border-dashed rounded-xl cursor-pointer
-        ${isDragOver ? 'dropzone-active' : 'border-zinc-700/40 hover:border-neon-cyan/30 bg-zinc-950/50'}
+        drop-zone relative flex flex-col items-center justify-center gap-5
+        w-full min-h-[220px] p-8 cursor-pointer
+        ${isDragOver ? 'drag-over' : ''}
         ${disabled ? 'opacity-50 pointer-events-none' : ''}
       `}
     >
-      <div className="flex items-center justify-center w-14 h-14 rounded-xl bg-zinc-900 border border-neon-cyan/20">
-        <FiUploadCloud className="w-7 h-7 text-neon-cyan" />
+      <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
+        <FiUploadCloud className="w-6 h-6 text-zinc-400" />
       </div>
 
       <div className="text-center space-y-1.5">
-        <p className="text-lg font-mono font-semibold text-zinc-200">
-          Drop your <span className="text-neon-cyan">{CATEGORY_LABELS[category]}</span> here
+        <p className="text-base font-medium text-zinc-300">
+          Drop your {CATEGORY_LABELS[category]} here
         </p>
-        <p className="text-sm text-zinc-500 leading-relaxed font-mono max-w-sm">
-          Supports{' '}
-          {badges.map((fmt, i) => (
-            <span key={fmt}>
-              <span className="text-neon-cyan font-semibold">{fmt}</span>
-              {i < badges.length - 1 ? ', ' : ''}
-            </span>
-          ))}
-        </p>
-        <p className="text-sm text-zinc-600 font-mono">
+        <p className="text-sm text-zinc-600">
           or{' '}
-          <span className="text-neon-purple underline underline-offset-2 decoration-neon-purple/40 hover:decoration-neon-purple cursor-pointer">
+          <span className="text-neon-cyan/70 hover:text-neon-cyan cursor-pointer">
             browse files
           </span>
         </p>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap justify-center">
+      <div className="flex items-center gap-1.5 flex-wrap justify-center">
         {badges.map((fmt) => (
           <span
             key={fmt}
-            className="text-[9px] font-mono font-bold uppercase tracking-wider text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800"
+            className="text-[10px] font-mono font-medium uppercase tracking-wider text-zinc-600 bg-white/[0.03] px-2 py-0.5 rounded-md border border-white/[0.04]"
           >
             {fmt}
           </span>
         ))}
       </div>
-
-      <p className="text-[10px] text-zinc-600 font-mono">
-        100% client-side — your files never leave your browser
-      </p>
 
       <input
         ref={inputRef}

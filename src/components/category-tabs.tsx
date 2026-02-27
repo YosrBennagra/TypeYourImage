@@ -8,7 +8,7 @@ interface CategoryTabsProps {
   readonly disabled?: boolean;
 }
 
-const CATEGORY_ICONS: Record<ConverterCategory, React.ReactNode> = {
+const ICONS: Record<ConverterCategory, React.ReactNode> = {
   image: <FiImage className="w-4 h-4" />,
   video: <FiFilm className="w-4 h-4" />,
   audio: <FiMusic className="w-4 h-4" />,
@@ -16,7 +16,7 @@ const CATEGORY_ICONS: Record<ConverterCategory, React.ReactNode> = {
 
 export function CategoryTabs({ active, onChange, disabled = false }: CategoryTabsProps) {
   return (
-    <div className="flex items-center gap-1 p-1 rounded-xl bg-zinc-900/60 border border-zinc-800/60">
+    <div className="inline-flex items-center gap-0.5 p-1 rounded-xl bg-white/[0.03] border border-white/[0.06]">
       {CATEGORIES.map((cat) => {
         const isActive = cat.id === active;
 
@@ -27,16 +27,15 @@ export function CategoryTabs({ active, onChange, disabled = false }: CategoryTab
             onClick={() => onChange(cat.id)}
             disabled={disabled}
             className={`
-              flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-mono font-medium
-              transition-all duration-200
+              flex items-center gap-2 px-5 py-2 rounded-lg text-sm font-medium transition-all
               ${isActive
-                ? 'bg-gradient-to-r from-neon-cyan/20 to-neon-purple/20 text-neon-cyan border border-neon-cyan/30'
-                : 'text-zinc-500 hover:text-zinc-300 hover:bg-zinc-800/40 border border-transparent'}
-              ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+                ? 'bg-white/[0.08] text-neon-cyan shadow-[0_0_12px_rgba(0,240,255,0.06)]'
+                : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/[0.03]'}
+              ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
             `}
             title={cat.description}
           >
-            {CATEGORY_ICONS[cat.id]}
+            {ICONS[cat.id]}
             <span>{cat.label}</span>
           </button>
         );
