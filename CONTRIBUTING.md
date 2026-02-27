@@ -1,6 +1,6 @@
-# Contributing to TypeYourImage
+# Contributing to AllYourTypes
 
-Thank you for your interest in contributing to **TypeYourImage**! This guide will help you get started.
+Thank you for your interest in contributing to **AllYourTypes**! This guide will help you get started.
 
 ## Table of Contents
 
@@ -29,7 +29,7 @@ This project follows the [Contributor Covenant Code of Conduct](./CODE_OF_CONDUC
 # 1. Fork the repository on GitHub
 # 2. Clone your fork
 git clone https://github.com/YOUR_USERNAME/TypeYourImage.git
-cd TypeYourImage
+cd AllYourTypes
 
 # 3. Install dependencies
 pnpm install
@@ -60,7 +60,7 @@ The app opens at `http://localhost:5174`.
 We follow the **Git Flow** model:
 
 ```
-main              ← Production (deployed to tyimage.veinpal.com)
+main              ← Production (deployed to allurtypes.veinpal.com)
 ├── develop       ← Integration branch
 │   ├── feat/*    ← New features
 │   ├── fix/*     ← Bug fixes
@@ -170,4 +170,4 @@ Use the [Feature Request](https://github.com/YosrBennagra/TypeYourImage/issues/n
 
 ---
 
-Thank you for helping make TypeYourImage better! 🎉
+Thank you for helping make AllYourTypes better! 🎉

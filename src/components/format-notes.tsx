@@ -1,5 +1,5 @@
 import { FiAlertTriangle, FiInfo } from 'react-icons/fi';
-import type { OutputFormat } from '../lib/constants';
+import type { OutputFormat, ConverterCategory } from '../lib/constants';
 
 interface TransparencyNoticeProps {
   readonly sourceHasAlpha: boolean;
@@ -22,19 +22,31 @@ export function TransparencyNotice({ sourceHasAlpha, targetFormat }: Transparenc
 
 interface FormatNotesProps {
   readonly format: OutputFormat;
+  readonly category: ConverterCategory;
 }
 
-export function FormatNotes({ format }: FormatNotesProps) {
+export function FormatNotes({ format, category }: FormatNotesProps) {
   const notes: string[] = [];
 
-  if (format.id === 'gif') {
-    notes.push('GIF is limited to 256 colors. Complex images may lose quality.');
+  // Image-specific notes
+  if (category === 'image') {
+    if (format.id === 'gif') notes.push('GIF is limited to 256 colors. Complex images may lose quality.');
+    if (format.id === 'bmp') notes.push('BMP files are uncompressed and can be very large.');
+    if (format.id === 'webp') notes.push('WebP offers 25-35% better compression than JPEG at similar quality.');
   }
-  if (format.id === 'bmp') {
-    notes.push('BMP files are uncompressed and can be very large.');
+
+  // Video-specific notes
+  if (category === 'video') {
+    if (format.id === 'video-gif') notes.push('Video will be resized to 480px width and limited to 12 fps for optimal GIF size.');
+    if (format.id === 'webm') notes.push('WebM uses VP8 encoding — great for web use with smaller file sizes.');
+    if (format.id === 'mp4') notes.push('MP4 with H.264 — the most widely compatible video format.');
   }
-  if (format.id === 'webp') {
-    notes.push('WebP offers 25-35% better compression than JPEG at similar quality.');
+
+  // Audio-specific notes
+  if (category === 'audio') {
+    if (format.id === 'wav') notes.push('WAV files are uncompressed. Output will be significantly larger.');
+    if (format.id === 'flac') notes.push('FLAC provides lossless compression — perfect quality, ~50% smaller than WAV.');
+    if (format.id === 'ogg') notes.push('OGG Vorbis is an open-source format with quality comparable to MP3.');
   }
 
   if (notes.length === 0) return null;

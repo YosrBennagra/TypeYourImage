@@ -4,7 +4,7 @@ User-agent: *
 Allow: /
 
 # Sitemap
-Sitemap: https://tyimage.veinpal.com/sitemap.xml
+Sitemap: https://allurtypes.veinpal.com/sitemap.xml
 
 # Crawl-delay (optional, respected by some bots)
 Crawl-delay: 1

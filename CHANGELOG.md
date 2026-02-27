@@ -7,18 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-02-27
+
 ### Added
 
-- Open source repository setup (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT)
-- GitHub issue templates (bug report, feature request)
-- Pull request template
-- GitHub Sponsors and Buy Me a Coffee funding configuration
-- CI/CD pipeline (lint, typecheck, build, security scan)
-- Deploy pipeline to Vercel (tyimage.veinpal.com)
-- Release pipeline with auto-generated changelogs
-- Full SEO meta tags (Open Graph, Twitter Cards, structured data)
-- EditorConfig for consistent coding styles
-- robots.txt and sitemap.xml for search engine indexing
+- **Multi-format conversion**: Images, Video, and Audio
+- Video conversion powered by FFmpeg.wasm (MP4, WebM, AVI, GIF)
+- Audio conversion powered by FFmpeg.wasm (MP3, WAV, OGG, AAC, FLAC)
+- Category tab interface (Images / Video / Audio)
+- Auto-detection of file type with smart category switching
+- Conversion progress bar for video and audio
+- FFmpeg.wasm lazy loading (downloaded from CDN on first use)
+- Feature cards on landing page (Privacy, Instant, No Sign-up)
+- Unified source preview for all file types (image, video, audio)
+- File size limits with warnings for large files
+- Cross-Origin-Isolation headers for WebAssembly support
+- Enhanced SEO with FAQPage structured data
+- Comprehensive keyword targeting for images, video, and audio
+- Deploy pipeline to Vercel (allurtypes.veinpal.com)
+
+### Changed
+
+- Rebranded from TypeYourImage to **AllYourTypes**
+- Deployment domain changed to `allurtypes.veinpal.com`
+- Format selector adapts to selected category
+- Drop zone accepts category-specific file types
+- Format notes cover image, video, and audio specifics
+- Upgraded package to version 2.0.0
 
 ## [1.0.0] - 2025-06-01
 
@@ -37,6 +52,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 100% client-side Canvas API conversion
 - Dark UI with neon accent theme
 - Responsive layout
+- Open source repository setup (LICENSE, CONTRIBUTING, SECURITY, CODE_OF_CONDUCT)
+- CI/CD pipeline (lint, typecheck, build, security scan)
+- Release pipeline with auto-generated changelogs
+- Full SEO meta tags (Open Graph, Twitter Cards, structured data)
 
-[Unreleased]: https://github.com/YosrBennagra/TypeYourImage/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/YosrBennagra/TypeYourImage/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/YosrBennagra/TypeYourImage/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/YosrBennagra/TypeYourImage/releases/tag/v1.0.0

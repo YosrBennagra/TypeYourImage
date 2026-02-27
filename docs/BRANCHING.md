@@ -3,7 +3,7 @@
 ## Branch Structure
 
 ```
-main              ← Production. Protected. Triggers deploy to tyimage.veinpal.com
+main              ← Production. Protected. Triggers deploy to allurtypes.veinpal.com
 ├── develop       ← Integration branch. Features merge here first.
 │   ├── feat/*    ← New features
 │   ├── fix/*     ← Bug fixes
@@ -23,7 +23,7 @@ main              ← Production. Protected. Triggers deploy to tyimage.veinpal.
 5. Merge to `develop` after review
 6. When ready to release: cut `release/x.y.z` from `develop`
 7. Open PR: `release/x.y.z` → `main`
-8. Merge triggers deploy to **tyimage.veinpal.com**
+8. Merge triggers deploy to **allurtypes.veinpal.com**
 9. Release workflow creates GitHub Release + tag
 10. Back-merge PR auto-created: `main` → `develop`
 
@@ -53,7 +53,7 @@ perf:      Performance improvement
 | Development | `feat/*` | `localhost:5174`           | No          |
 | Preview     | `feat/*` | Vercel preview URL         | Yes         |
 | Staging     | develop  | Vercel preview URL         | Yes         |
-| Production  | main     | `https://tyimage.veinpal.com`  | Yes         |
+| Production  | main     | `https://allurtypes.veinpal.com` | Yes         |
 
 ## Required GitHub Secrets
 
@@ -61,4 +61,4 @@ perf:      Performance improvement
 | ------------------ | --------------------------------- |
 | `VERCEL_TOKEN`     | Vercel API token                  |
 | `VERCEL_ORG_ID`    | Vercel organization ID            |
-| `VERCEL_PROJECT_ID`| Vercel project ID for TypeYourImage |
+| `VERCEL_PROJECT_ID`| Vercel project ID for AllYourTypes |

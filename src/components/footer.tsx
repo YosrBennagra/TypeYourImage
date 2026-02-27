@@ -7,7 +7,7 @@ export function Footer() {
     <div className="flex items-center justify-between px-5 h-full">
       <div className="flex items-center gap-1.5 text-[10px] text-zinc-600 font-mono">
         <FiShield className="w-3 h-3 text-neon-green/50" />
-        <span>100% client-side processing</span>
+        <span>100% client-side • Files never leave your browser</span>
       </div>
 
       <div className="flex items-center gap-0.5">

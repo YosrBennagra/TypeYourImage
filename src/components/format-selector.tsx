@@ -1,21 +1,29 @@
 import { FiCheck } from 'react-icons/fi';
-import { OUTPUT_FORMATS, type OutputFormat } from '../lib/constants';
+import type { OutputFormat, ConverterCategory } from '../lib/constants';
+import { getCategoryConfig } from '../lib/constants';
 
 interface FormatSelectorProps {
+  readonly category: ConverterCategory;
   readonly selected: OutputFormat | null;
   readonly onSelect: (format: OutputFormat) => void;
   readonly sourceFormat: string | undefined;
 }
 
-export function FormatSelector({ selected, onSelect, sourceFormat }: FormatSelectorProps) {
+export function FormatSelector({ category, selected, onSelect, sourceFormat }: FormatSelectorProps) {
+  const config = getCategoryConfig(category);
+  const formats = config.outputFormats;
+
   // Derive source format id from MIME type
   const sourceId = sourceFormat
-    ? OUTPUT_FORMATS.find((f) => f.mimeType === sourceFormat)?.id
+    ? formats.find((f) => f.mimeType === sourceFormat)?.id
     : undefined;
 
+  // Use responsive grid based on number of formats
+  const gridCols = formats.length <= 4 ? 'grid-cols-4' : 'grid-cols-5';
+
   return (
-    <div className="grid grid-cols-5 gap-2">
-      {OUTPUT_FORMATS.map((fmt) => {
+    <div className={`grid ${gridCols} gap-2`}>
+      {formats.map((fmt) => {
         const isSelected = selected?.id === fmt.id;
         const isSameAsSource = fmt.id === sourceId;
 

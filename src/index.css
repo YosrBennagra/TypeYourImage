@@ -29,6 +29,11 @@
   background: linear-gradient(135deg, #00f0ff, #b44aff);
 }
 
+/* ── Category tab glow on active ───────────────────────────────── */
+.category-active {
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.15);
+}
+
 /* ── Clean transitions ─────────────────────────────────────────── */
 *,
 *::before,
@@ -99,6 +104,15 @@ input[type='range']::-moz-range-thumb {
   border: 2px solid #18181b;
 }
 
+/* ── Audio element styling ─────────────────────────────────────── */
+audio {
+  height: 32px;
+  filter: invert(1) hue-rotate(180deg);
+}
+audio::-webkit-media-controls-panel {
+  background: transparent;
+}
+
 /* ── Spinner animation ─────────────────────────────────────────── */
 @keyframes spinner {
   to {
@@ -107,4 +121,17 @@ input[type='range']::-moz-range-thumb {
 }
 .animate-spinner {
   animation: spinner 1s linear infinite;
+}
+
+/* ── Pulse glow for loading states ─────────────────────────────── */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(0, 240, 255, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+  }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
 }

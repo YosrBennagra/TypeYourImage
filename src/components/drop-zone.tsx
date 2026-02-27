@@ -1,19 +1,44 @@
 import { useCallback, useRef, useState, type DragEvent, type ChangeEvent } from 'react';
 import { FiUploadCloud } from 'react-icons/fi';
-import { ACCEPTED_EXTENSIONS, ACCEPTED_TYPES } from '../lib/constants';
+import {
+  type ConverterCategory,
+  getCategoryConfig,
+  detectCategoryFromFile,
+} from '../lib/constants';
 
 interface DropZoneProps {
+  readonly category: ConverterCategory;
   readonly onFileSelected: (file: File) => void;
+  readonly onCategorySwitch?: (category: ConverterCategory) => void;
   readonly disabled?: boolean;
 }
 
-export function DropZone({ onFileSelected, disabled = false }: DropZoneProps) {
+const CATEGORY_LABELS: Record<ConverterCategory, string> = {
+  image: 'image',
+  video: 'video',
+  audio: 'audio file',
+};
+
+const FORMAT_BADGES: Record<ConverterCategory, readonly string[]> = {
+  image: ['PNG', 'JPG', 'WebP', 'GIF', 'SVG', 'BMP'],
+  video: ['MP4', 'WebM', 'AVI', 'MOV', 'MKV'],
+  audio: ['MP3', 'WAV', 'OGG', 'AAC', 'FLAC', 'M4A'],
+};
+
+export function DropZone({ category, onFileSelected, onCategorySwitch, disabled = false }: DropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const config = getCategoryConfig(category);
 
-  const isValidFile = useCallback((file: File): boolean => {
-    return (ACCEPTED_TYPES as readonly string[]).includes(file.type);
-  }, []);
+  const isValidFile = useCallback(
+    (file: File): boolean => {
+      // Check current category first
+      if ((config.acceptedTypes as readonly string[]).includes(file.type)) return true;
+      // Auto-detect from any supported category
+      return detectCategoryFromFile(file) !== null;
+    },
+    [config],
+  );
 
   const handleDrop = useCallback(
     (e: DragEvent<HTMLDivElement>) => {
@@ -23,11 +48,19 @@ export function DropZone({ onFileSelected, disabled = false }: DropZoneProps) {
       if (disabled) return;
 
       const file = e.dataTransfer.files[0];
+      if (!file) return;
+
+      // Auto-switch category if file is from a different one
+      const detected = detectCategoryFromFile(file);
+      if (detected && detected !== category && onCategorySwitch) {
+        onCategorySwitch(detected);
+      }
+
       if (file && isValidFile(file)) {
         onFileSelected(file);
       }
     },
-    [disabled, isValidFile, onFileSelected],
+    [disabled, isValidFile, onFileSelected, category, onCategorySwitch],
   );
 
   const handleDragOver = useCallback(
@@ -52,13 +85,22 @@ export function DropZone({ onFileSelected, disabled = false }: DropZoneProps) {
   const handleFileChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
-      if (file && isValidFile(file)) {
+      if (!file) return;
+
+      const detected = detectCategoryFromFile(file);
+      if (detected && detected !== category && onCategorySwitch) {
+        onCategorySwitch(detected);
+      }
+
+      if (isValidFile(file)) {
         onFileSelected(file);
       }
       e.target.value = '';
     },
-    [isValidFile, onFileSelected],
+    [isValidFile, onFileSelected, category, onCategorySwitch],
   );
+
+  const badges = FORMAT_BADGES[category];
 
   return (
     <div
@@ -85,16 +127,16 @@ export function DropZone({ onFileSelected, disabled = false }: DropZoneProps) {
 
       <div className="text-center space-y-1.5">
         <p className="text-lg font-mono font-semibold text-zinc-200">
-          Drop your <span className="text-neon-cyan">image</span> here
+          Drop your <span className="text-neon-cyan">{CATEGORY_LABELS[category]}</span> here
         </p>
         <p className="text-sm text-zinc-500 leading-relaxed font-mono max-w-sm">
           Supports{' '}
-          <span className="text-neon-cyan font-semibold">PNG</span>,{' '}
-          <span className="text-neon-cyan font-semibold">JPG</span>,{' '}
-          <span className="text-neon-cyan font-semibold">WebP</span>,{' '}
-          <span className="text-neon-cyan font-semibold">GIF</span>,{' '}
-          <span className="text-neon-cyan font-semibold">SVG</span>,{' '}
-          <span className="text-neon-cyan font-semibold">BMP</span>
+          {badges.map((fmt, i) => (
+            <span key={fmt}>
+              <span className="text-neon-cyan font-semibold">{fmt}</span>
+              {i < badges.length - 1 ? ', ' : ''}
+            </span>
+          ))}
         </p>
         <p className="text-sm text-zinc-600 font-mono">
           or{' '}
@@ -105,7 +147,7 @@ export function DropZone({ onFileSelected, disabled = false }: DropZoneProps) {
       </div>
 
       <div className="flex items-center gap-2 flex-wrap justify-center">
-        {['PNG', 'JPG', 'WebP', 'GIF', 'SVG', 'BMP'].map((fmt) => (
+        {badges.map((fmt) => (
           <span
             key={fmt}
             className="text-[9px] font-mono font-bold uppercase tracking-wider text-zinc-500 bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800"
@@ -122,10 +164,10 @@ export function DropZone({ onFileSelected, disabled = false }: DropZoneProps) {
       <input
         ref={inputRef}
         type="file"
-        accept={ACCEPTED_EXTENSIONS}
+        accept={config.acceptedExtensions}
         onChange={handleFileChange}
         className="hidden"
-        aria-label="Select image file"
+        aria-label={`Select ${CATEGORY_LABELS[category]}`}
       />
     </div>
   );
