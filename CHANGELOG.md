@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Pull request template
 - GitHub Sponsors and Buy Me a Coffee funding configuration
 - CI/CD pipeline (lint, typecheck, build, security scan)
-- Deploy pipeline to Vercel (tym.veinpal.com)
+- Deploy pipeline to Vercel (tyimage.veinpal.com)
 - Release pipeline with auto-generated changelogs
 - Full SEO meta tags (Open Graph, Twitter Cards, structured data)
 - EditorConfig for consistent coding styles

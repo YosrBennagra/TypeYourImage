@@ -8,7 +8,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![React](https://img.shields.io/badge/React-19-61dafb.svg)](https://react.dev/)
 
-[**Live Demo**](https://tym.veinpal.com) | [Report Bug](https://github.com/YosrBennagra/TypeYourImage/issues/new?template=bug_report.yml) | [Request Feature](https://github.com/YosrBennagra/TypeYourImage/issues/new?template=feature_request.yml)
+[**Live Demo**](https://tyimage.veinpal.com) | [Report Bug](https://github.com/YosrBennagra/TypeYourImage/issues/new?template=bug_report.yml) | [Request Feature](https://github.com/YosrBennagra/TypeYourImage/issues/new?template=feature_request.yml)
 
 </div>
 
