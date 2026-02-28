@@ -9,7 +9,7 @@
 
 ## Reporting a Vulnerability
 
-We take security seriously. Although TypeYourImage is a 100% client-side application (no server, no data uploads), we still want to ensure the code is safe for users.
+We take security seriously. Although AllYourTypes is a 100% client-side application (no server, no data uploads), we still want to ensure the code is safe for users.
 
 ### How to Report
 

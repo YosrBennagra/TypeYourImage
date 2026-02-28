@@ -10,29 +10,31 @@ const STEPS = [
 
 export function StepIndicator({ currentStep }: StepIndicatorProps) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       {STEPS.map((step, i) => {
         const isActive = step.num === currentStep;
         const isDone = step.num < currentStep;
 
         return (
-          <div key={step.num} className="flex items-center gap-2">
+          <div key={step.num} className="flex items-center gap-3">
             {i > 0 && (
-              <div
-                className={`w-6 h-px ${isDone ? 'bg-neon-cyan/40' : 'bg-zinc-700'}`}
-              />
+              <div className={`w-8 h-px ${isDone ? 'bg-neon-cyan/30' : 'bg-white/[0.06]'}`} />
             )}
             <div className="flex items-center gap-1.5">
               <div
                 className={`
-                  flex items-center justify-center w-5 h-5 rounded-full text-[10px] font-mono font-bold
-                  ${isActive ? 'step-active text-zinc-950' : isDone ? 'bg-neon-cyan/20 text-neon-cyan' : 'bg-zinc-800 text-zinc-500'}
+                  w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-bold
+                  ${isActive
+                    ? 'bg-neon-cyan text-zinc-950'
+                    : isDone
+                      ? 'bg-neon-cyan/15 text-neon-cyan'
+                      : 'bg-white/[0.04] text-zinc-600'}
                 `}
               >
                 {step.num}
               </div>
               <span
-                className={`text-[11px] font-mono ${isActive ? 'text-zinc-200' : isDone ? 'text-neon-cyan/60' : 'text-zinc-600'}`}
+                className={`text-xs ${isActive ? 'text-zinc-200' : isDone ? 'text-neon-cyan/50' : 'text-zinc-600'}`}
               >
                 {step.label}
               </span>

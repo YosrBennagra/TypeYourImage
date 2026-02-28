@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# Deploy Pipeline — TypeYourImage → tyimage.veinpal.com
+# Deploy Pipeline — AllYourTypes → allurtypes.veinpal.com
 # Runs on push to main only
 # ─────────────────────────────────────────────────────────────
 
@@ -57,7 +57,7 @@ jobs:
       - name: Health Check
         run: |
           sleep 10
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://tyimage.veinpal.com)
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://allurtypes.veinpal.com)
           if [ "$STATUS" -ne 200 ]; then
             echo "::error::Health check failed with status $STATUS"
             exit 1

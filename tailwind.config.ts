@@ -11,15 +11,11 @@ export default {
       colors: {
         neon: {
           cyan: '#00f0ff',
-          purple: '#b44aff',
-          green: '#39ff14',
-          pink: '#ff2d95',
-          yellow: '#ffe600',
+          purple: '#a855f7',
+          green: '#34d399',
+          pink: '#f472b6',
+          yellow: '#fbbf24',
         },
-      },
-      animation: {
-        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        'spin-slow': 'spin 2s linear infinite',
       },
     },
   },

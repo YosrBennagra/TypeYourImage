@@ -1,9 +1,9 @@
 {
-  "name": "typeyourimage",
+  "name": "allyourtypes",
   "private": false,
-  "version": "1.0.0",
+  "version": "2.0.0",
   "type": "module",
-  "description": "Free online image format converter — upload, preview, convert, and download. 100% client-side.",
+  "description": "Free online file converter — images, videos, and audio. All processing happens in your browser with WebAssembly. No uploads, no sign-up.",
   "author": {
     "name": "Veinpal",
     "url": "https://github.com/YosrBennagra"
@@ -16,16 +16,22 @@
   "bugs": {
     "url": "https://github.com/YosrBennagra/TypeYourImage/issues"
   },
-  "homepage": "https://tyimage.veinpal.com",
+  "homepage": "https://allurtypes.veinpal.com",
   "keywords": [
-    "image",
-    "converter",
-    "format",
+    "file-converter",
+    "image-converter",
+    "video-converter",
+    "audio-converter",
     "png",
     "jpg",
     "webp",
-    "gif",
-    "image-converter",
+    "mp4",
+    "webm",
+    "mp3",
+    "wav",
+    "ffmpeg",
+    "wasm",
+    "client-side",
     "react",
     "typescript",
     "vite"
@@ -45,6 +51,8 @@
     "format:check": "prettier --check ."
   },
   "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@vercel/analytics": "^1.6.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
