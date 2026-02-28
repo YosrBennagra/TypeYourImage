@@ -1,4 +1,4 @@
-import { FiImage, FiDownload, FiArrowRight, FiCheckCircle } from 'react-icons/fi';
+import { FiDownload, FiArrowRight, FiCheckCircle } from 'react-icons/fi';
 import type { OutputFormat } from '../lib/constants';
 import { formatFileSize } from '../lib/converter';
 
@@ -22,42 +22,33 @@ export function ConversionResult({
   const isSmaller = saved > 0;
 
   return (
-    <div className="flex flex-col gap-3">
-      {/* Success badge */}
+    <div className="flex flex-col gap-4">
+      {/* Success */}
       <div className="flex items-center gap-2">
         <FiCheckCircle className="w-4 h-4 text-neon-green" />
-        <span className="text-sm font-mono font-semibold text-neon-green">
-          Conversion complete
-        </span>
+        <span className="text-sm font-semibold text-neon-green">Conversion complete</span>
       </div>
 
       {/* Size comparison */}
-      <div className="flex items-center gap-3 text-xs font-mono">
-        <div className="flex items-center gap-1.5 text-zinc-400">
-          <FiImage className="w-3.5 h-3.5" />
-          <span>{formatFileSize(originalSize)}</span>
-        </div>
+      <div className="flex items-center gap-3 text-xs">
+        <span className="text-zinc-400 font-mono">{formatFileSize(originalSize)}</span>
         <FiArrowRight className="w-3 h-3 text-zinc-600" />
-        <div className="flex items-center gap-1.5 text-neon-cyan">
-          <FiImage className="w-3.5 h-3.5" />
-          <span>{formatFileSize(convertedSize)}</span>
-        </div>
-        <span className={`text-[10px] px-1.5 py-0.5 rounded ${isSmaller ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-yellow/10 text-neon-yellow'}`}>
+        <span className="text-neon-cyan font-mono">{formatFileSize(convertedSize)}</span>
+        <span
+          className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
+            isSmaller ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-yellow/10 text-neon-yellow'
+          }`}
+        >
           {ratio}%{isSmaller ? ` (−${formatFileSize(saved)})` : ''}
         </span>
       </div>
 
-      {/* Download button */}
+      {/* Download */}
       <button
         type="button"
         onClick={onDownload}
         disabled={isDownloading}
-        className={`
-          flex items-center justify-center gap-2 w-full py-2.5 rounded-lg
-          font-mono font-semibold text-sm
-          bg-neon-cyan text-zinc-950 hover:bg-neon-cyan/90
-          disabled:opacity-50 disabled:cursor-not-allowed
-        `}
+        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-lg font-semibold text-sm bg-neon-cyan text-zinc-950 hover:bg-neon-cyan/90 disabled:opacity-50 transition-colors"
       >
         <FiDownload className="w-4 h-4" />
         Download {format.label}

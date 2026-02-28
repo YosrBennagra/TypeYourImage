@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────────
-# Release Pipeline — TypeYourImage
+# Release Pipeline — AllYourTypes
 # Creates GitHub releases when release/* branches merge to main
 # ─────────────────────────────────────────────────────────────
 

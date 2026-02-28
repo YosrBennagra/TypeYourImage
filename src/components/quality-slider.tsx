@@ -11,7 +11,7 @@ export function QualitySlider({ quality, onChange }: QualitySliderProps) {
 
   return (
     <div className="flex items-center gap-4">
-      <label className="text-xs font-mono text-zinc-400 whitespace-nowrap" htmlFor="quality-slider">
+      <label className="text-xs text-zinc-500 whitespace-nowrap" htmlFor="quality-slider">
         Quality
       </label>
       <input
@@ -30,7 +30,7 @@ export function QualitySlider({ quality, onChange }: QualitySliderProps) {
         <button
           type="button"
           onClick={() => onChange(DEFAULT_QUALITY)}
-          className="text-[10px] font-mono text-zinc-500 hover:text-zinc-300 underline underline-offset-2"
+          className="text-[10px] text-zinc-600 hover:text-zinc-300"
         >
           reset
         </button>
