@@ -3,7 +3,9 @@
   "framework": "vite",
   "buildCommand": "pnpm run build",
   "outputDirectory": "dist",
-  "regions": ["cdg1"],
+  "regions": [
+    "cdg1"
+  ],
   "headers": [
     {
       "source": "/(.*)",

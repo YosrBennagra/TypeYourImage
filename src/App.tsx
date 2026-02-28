@@ -126,7 +126,7 @@ export default function App() {
           });
 
           if (!isFFmpegLoaded()) {
-            getFFmpeg().catch(() => {});
+            getFFmpeg().catch(() => { });
           }
         }
 

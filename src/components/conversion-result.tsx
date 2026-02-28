@@ -35,9 +35,8 @@ export function ConversionResult({
         <FiArrowRight className="w-3 h-3 text-zinc-600" />
         <span className="text-neon-cyan font-mono">{formatFileSize(convertedSize)}</span>
         <span
-          className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${
-            isSmaller ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-yellow/10 text-neon-yellow'
-          }`}
+          className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${isSmaller ? 'bg-neon-green/10 text-neon-green' : 'bg-neon-yellow/10 text-neon-yellow'
+            }`}
         >
           {ratio}%{isSmaller ? ` (−${formatFileSize(saved)})` : ''}
         </span>
