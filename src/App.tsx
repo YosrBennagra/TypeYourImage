@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { FiRefreshCw, FiZap, FiLoader } from 'react-icons/fi';
 import {
   type OutputFormat,
@@ -24,6 +24,12 @@ import { TransparencyNotice, FormatNotes } from './components/format-notes';
 import { FeatureCards } from './components/feature-cards';
 import { ProgressBar } from './components/progress-bar';
 import { Footer } from './components/footer';
+import { HowItWorks } from './components/how-it-works';
+import { FaqSection } from './components/faq-section';
+import { SupportedFormats } from './components/supported-formats';
+import { useToast } from './hooks/use-toast';
+import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
+import { useConversionTimer } from './hooks/use-conversion-timer';
 
 interface SourceFile {
   readonly file: File;
@@ -49,6 +55,10 @@ export default function App() {
   const [result, setResult] = useState<ConversionState | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
+  const [conversionTimeMs, setConversionTimeMs] = useState(0);
+  const resultPreviewUrl = useRef<string | null>(null);
+  const { toast } = useToast();
+  const timer = useConversionTimer();
 
   // ── Step calculation ─────────────────────────────────────────
   const computeStep = (): number => {
@@ -146,6 +156,8 @@ export default function App() {
     setError(null);
     setResult(null);
     setConversionProgress(0);
+    setConversionTimeMs(0);
+    timer.start();
 
     try {
       let blob: Blob;
@@ -170,15 +182,20 @@ export default function App() {
         }
       }
 
+      const elapsed = timer.stop();
+      setConversionTimeMs(elapsed);
       setResult({ blob, format: selectedFormat });
       setStatus('success');
+      toast(`Converted to ${selectedFormat.label} in ${timer.format(elapsed)}`, 'success');
     } catch (err) {
+      timer.stop();
       const msg =
         err instanceof Error ? err.message : `Conversion to ${selectedFormat.label} failed.`;
       setError(msg);
       setStatus('error');
+      toast('Conversion failed', 'error');
     }
-  }, [source, selectedFormat, quality]);
+  }, [source, selectedFormat, quality, timer, toast]);
 
   // ── Handle download ──────────────────────────────────────────
   const handleDownload = useCallback(() => {
@@ -186,13 +203,34 @@ export default function App() {
     setIsDownloading(true);
     const baseName = getBaseName(source.file.name);
     downloadBlob(result.blob, `${baseName}${result.format.extension}`);
+    toast('Download started', 'success');
     setTimeout(() => setIsDownloading(false), 500);
-  }, [result, source]);
+  }, [result, source, toast]);
+
+  // ── Copy to clipboard ────────────────────────────────────────
+  const handleCopyToClipboard = useCallback(async () => {
+    if (!result) return;
+    try {
+      if (result.format.mimeType === 'image/png' && navigator.clipboard?.write) {
+        const item = new ClipboardItem({ 'image/png': result.blob });
+        await navigator.clipboard.write([item]);
+        toast('Copied to clipboard', 'success');
+      } else {
+        toast('Clipboard copy only supported for PNG images', 'info');
+      }
+    } catch {
+      toast('Failed to copy to clipboard', 'error');
+    }
+  }, [result, toast]);
 
   // ── Reset ────────────────────────────────────────────────────
   const handleReset = useCallback(() => {
     if (source?.previewUrl) {
       URL.revokeObjectURL(source.previewUrl);
+    }
+    if (resultPreviewUrl.current) {
+      URL.revokeObjectURL(resultPreviewUrl.current);
+      resultPreviewUrl.current = null;
     }
     setSource(null);
     setSelectedFormat(null);
@@ -201,6 +239,7 @@ export default function App() {
     setError(null);
     setResult(null);
     setConversionProgress(0);
+    setConversionTimeMs(0);
   }, [source]);
 
   // ── Convert another (keep source, clear result) ──────────────
@@ -211,6 +250,7 @@ export default function App() {
     setStatus('ready');
     setError(null);
     setConversionProgress(0);
+    setConversionTimeMs(0);
   }, []);
 
   // ── Category change ──────────────────────────────────────────
@@ -222,18 +262,35 @@ export default function App() {
     [source],
   );
 
+  // ── Keyboard shortcuts ───────────────────────────────────────
+  useKeyboardShortcuts({
+    onPasteFile: (file: File) => { void handleFileSelected(file); },
+    onCategorySwitch: setCategory,
+    onReset: handleReset,
+    hasSource: !!source,
+    isConverting: status === 'converting' || status === 'loading-engine',
+  });
+
   const showSizeWarning = source && source.file.size > SIZE_WARNING_THRESHOLD;
 
   return (
-    <div className="flex flex-col h-screen max-h-screen overflow-hidden">
-      {/* ── Ambient glow ─────────────────────────────────────── */}
+    <div className="flex flex-col min-h-screen">
+      {/* ── Skip to content (accessibility) ──────────────── */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-2 focus:left-2 focus:z-50 focus:px-4 focus:py-2 focus:bg-neon-cyan focus:text-zinc-950 focus:rounded-lg focus:text-sm focus:font-semibold"
+      >
+        Skip to content
+      </a>
+
+      {/* ── Ambient glow ─────────────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
         <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-neon-cyan/[0.03] blur-[100px]" />
       </div>
 
-      {/* ── Header (workspace only) ──────────────────────────── */}
+      {/* ── Header (workspace only) ──────────────────────── */}
       {source && (
-        <header className="shrink-0 h-14 border-b border-white/[0.06] bg-zinc-950/80 backdrop-blur-sm flex items-center px-6 relative z-10">
+        <header className="sticky top-0 shrink-0 h-14 border-b border-white/[0.06] bg-zinc-950/80 backdrop-blur-sm flex items-center px-6 z-20">
           <div className="flex items-center gap-2.5">
             <FiZap className="w-4 h-4 text-neon-cyan" />
             <span className="text-sm font-semibold tracking-tight">
@@ -246,7 +303,8 @@ export default function App() {
           <button
             type="button"
             onClick={handleReset}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs text-zinc-500 hover:text-zinc-200 hover:bg-white/[0.06] transition-colors"
+            title="Reset (Esc)"
           >
             <FiRefreshCw className="w-3.5 h-3.5" />
             New File
@@ -254,61 +312,77 @@ export default function App() {
         </header>
       )}
 
-      {/* ── Main ─────────────────────────────────────────────── */}
-      <main className="flex-1 min-h-0 relative z-10">
+      {/* ── Main ─────────────────────────────────────────── */}
+      <main id="main-content" className="flex-1 relative z-10">
         {!source ? (
-          /* ── Landing ─────────────────────────────────────── */
-          <div className="h-full flex items-center justify-center">
-            <div className="w-full max-w-lg flex flex-col items-center gap-8 px-4">
-              {/* Brand */}
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-2.5 mb-2">
-                  <div className="w-9 h-9 rounded-lg bg-neon-cyan/[0.08] border border-neon-cyan/20 flex items-center justify-center">
-                    <FiZap className="w-4 h-4 text-neon-cyan" />
+          /* ── Landing ─────────────────────────────────── */
+          <div className="flex flex-col items-center">
+            {/* Hero area */}
+            <div className="w-full flex items-center justify-center min-h-[calc(100vh-60px)] py-12">
+              <div className="w-full max-w-2xl flex flex-col items-center gap-8 px-4">
+                {/* Brand */}
+                <div className="text-center animate-fade-in">
+                  <div className="flex items-center justify-center gap-2.5 mb-3">
+                    <div className="w-10 h-10 rounded-xl bg-neon-cyan/[0.08] border border-neon-cyan/20 flex items-center justify-center">
+                      <FiZap className="w-5 h-5 text-neon-cyan" />
+                    </div>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                      All<span className="text-neon-cyan">Your</span>Types
+                    </h1>
                   </div>
-                  <h1 className="text-2xl font-bold tracking-tight">
-                    All<span className="text-neon-cyan">Your</span>Types
-                  </h1>
+                  <p className="text-base text-zinc-500 mt-1 max-w-md mx-auto">
+                    Convert images, videos & audio instantly — right in your browser.
+                    <br />
+                    <span className="text-zinc-600">No uploads. No sign-up. 100% private.</span>
+                  </p>
                 </div>
-                <p className="text-sm text-zinc-500 mt-1">
-                  Convert files instantly — right in your browser
-                </p>
-              </div>
 
-              {/* Category tabs */}
-              <CategoryTabs
-                active={category}
-                onChange={handleCategoryChange}
-                disabled={status === 'uploading'}
-              />
-
-              {/* Drop zone */}
-              <div className="w-full">
-                <DropZone
-                  category={category}
-                  onFileSelected={handleFileSelected}
-                  onCategorySwitch={setCategory}
-                  disabled={status === 'uploading'}
-                />
-              </div>
-
-              {status === 'uploading' && (
-                <div className="flex items-center gap-2 text-sm text-zinc-500">
-                  <FiLoader className="w-4 h-4 animate-spinner" />
-                  Loading file…
+                {/* Category tabs */}
+                <div className="animate-fade-in-delay-1">
+                  <CategoryTabs
+                    active={category}
+                    onChange={handleCategoryChange}
+                    disabled={status === 'uploading'}
+                  />
                 </div>
-              )}
 
-              {/* Feature badges */}
-              <FeatureCards />
+                {/* Drop zone */}
+                <div className="w-full animate-fade-in-delay-2">
+                  <DropZone
+                    category={category}
+                    onFileSelected={handleFileSelected}
+                    onCategorySwitch={setCategory}
+                    disabled={status === 'uploading'}
+                  />
+                </div>
+
+                {status === 'uploading' && (
+                  <div className="flex items-center gap-2 text-sm text-zinc-500">
+                    <FiLoader className="w-4 h-4 animate-spinner" />
+                    Loading file…
+                  </div>
+                )}
+
+                {/* Feature badges */}
+                <div className="w-full animate-fade-in-delay-3">
+                  <FeatureCards />
+                </div>
+              </div>
+            </div>
+
+            {/* Below-the-fold sections */}
+            <div className="w-full flex flex-col items-center gap-16 px-4 pb-20">
+              <HowItWorks />
+              <SupportedFormats />
+              <FaqSection />
             </div>
           </div>
         ) : (
-          /* ── Workspace ───────────────────────────────────── */
-          <div className="max-w-5xl mx-auto h-full grid grid-cols-1 lg:grid-cols-12 gap-5 p-5">
+          /* ── Workspace ───────────────────────────────── */
+          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 p-5">
             {/* Left: Source */}
             <div className="lg:col-span-5">
-              <div className="glass-card h-full p-5 flex flex-col">
+              <div className="glass-card p-5 flex flex-col lg:sticky lg:top-20">
                 <h2 className="section-title mb-4">Source File</h2>
 
                 <SourcePreview
@@ -329,7 +403,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="mt-auto pt-4 text-xs text-zinc-600 hover:text-zinc-300"
+                  className="mt-auto pt-4 text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
                 >
                   Change file
                 </button>
@@ -337,9 +411,9 @@ export default function App() {
             </div>
 
             {/* Right: Convert */}
-            <div className="lg:col-span-7 flex flex-col gap-4 overflow-y-auto">
+            <div className="lg:col-span-7 flex flex-col gap-4">
               {/* Format selector */}
-              <div className="glass-card p-5">
+              <div className="glass-card p-5 animate-fade-in">
                 <h2 className="section-title mb-4">Output Format</h2>
                 <FormatSelector
                   category={source.category}
@@ -356,7 +430,7 @@ export default function App() {
 
               {/* Options */}
               {selectedFormat && (
-                <div className="glass-card p-5 space-y-3">
+                <div className="glass-card p-5 space-y-3 animate-fade-in">
                   {selectedFormat.supportsQuality && (
                     <QualitySlider quality={quality} onChange={setQuality} />
                   )}
@@ -418,18 +492,24 @@ export default function App() {
 
               {/* Result */}
               {result && (
-                <div className="glass-card-success p-5">
+                <div className="glass-card-success p-5 animate-fade-in">
                   <ConversionResult
                     originalSize={source.file.size}
                     convertedSize={result.blob.size}
                     format={result.format}
                     onDownload={handleDownload}
                     isDownloading={isDownloading}
+                    conversionTimeMs={conversionTimeMs}
+                    onCopyToClipboard={
+                      source.category === 'image' && result.format.mimeType === 'image/png'
+                        ? handleCopyToClipboard
+                        : undefined
+                    }
                   />
                   <button
                     type="button"
                     onClick={handleConvertAnother}
-                    className="mt-3 w-full text-xs text-zinc-600 hover:text-zinc-300 text-center"
+                    className="mt-3 w-full text-xs text-zinc-600 hover:text-zinc-300 text-center transition-colors"
                   >
                     Convert to another format
                   </button>
@@ -438,7 +518,7 @@ export default function App() {
 
               {/* Error */}
               {error && (
-                <div className="glass-card-error p-5">
+                <div className="glass-card-error p-5 animate-fade-in">
                   <p className="text-sm text-red-400">{error}</p>
                   <button
                     type="button"
@@ -446,7 +526,7 @@ export default function App() {
                       setError(null);
                       setStatus('ready');
                     }}
-                    className="mt-2 text-xs text-zinc-600 hover:text-zinc-300"
+                    className="mt-2 text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
                   >
                     Dismiss
                   </button>
@@ -455,7 +535,7 @@ export default function App() {
 
               {/* Converted preview (image) */}
               {result && source.category === 'image' && (
-                <div className="glass-card p-5">
+                <div className="glass-card p-5 animate-fade-in">
                   <h2 className="section-title mb-3">Preview</h2>
                   <div className="flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-white/[0.04]">
                     <img
@@ -469,7 +549,7 @@ export default function App() {
 
               {/* Converted preview (video) */}
               {result && source.category === 'video' && result.format.id !== 'video-gif' && (
-                <div className="glass-card p-5">
+                <div className="glass-card p-5 animate-fade-in">
                   <h2 className="section-title mb-3">Preview</h2>
                   <video
                     src={URL.createObjectURL(result.blob)}
@@ -485,7 +565,7 @@ export default function App() {
         )}
       </main>
 
-      {/* ── Footer ───────────────────────────────────────────── */}
+      {/* ── Footer ───────────────────────────────────────── */}
       <footer className="shrink-0 relative z-10 border-t border-white/[0.04]">
         <Footer />
       </footer>
