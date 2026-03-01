@@ -15,12 +15,12 @@ const FAQ_ITEMS = [
     {
         question: 'What file formats are supported?',
         answer:
-            'Images: PNG, JPG, WebP, GIF, SVG, BMP. Video: MP4, WebM, AVI, MOV, MKV. Audio: MP3, WAV, OGG, AAC, FLAC, M4A. We are continuously adding more formats.',
+            '200+ formats. Images: PNG, JPG, WebP, AVIF, HEIF, JXL, TIFF, SVG, PSD, Camera RAW (CR2, NEF, ARW, DNG), ICO, EXR, and more. Video: MP4, MOV, MKV, AVI, WebM, WMV, FLV, MPEG, 3GP, TS, VOB, MXF. Audio: MP3, AAC, M4A, OGG, Opus, WMA, WAV, FLAC, ALAC, AIFF, AC3, MP2, AMR. Subtitles: SRT ↔ VTT. Data: JSON, CSV, TSV, YAML, XML (any-to-any). Plus video→audio extraction and animated GIF/APNG/WebP/AVIF.',
     },
     {
         question: 'Is there a file size limit?',
         answer:
-            'Images up to 50 MB, audio up to 200 MB, and video up to 500 MB. Since everything runs in your browser, performance depends on your device.',
+            'Images up to 100 MB, audio up to 500 MB, and video up to 2 GB. Since everything runs in your browser, performance depends on your device.',
     },
     {
         question: 'How does video/audio conversion work?',
@@ -42,38 +42,40 @@ export function FaqSection() {
         [],
     );
 
+    const renderItem = (item: typeof FAQ_ITEMS[number], i: number) => {
+        const isOpen = openIndex === i;
+        return (
+            <div
+                key={item.question}
+                className="rounded-xl bg-surface border border-white/[0.05] overflow-hidden transition-colors hover:border-white/[0.08]"
+            >
+                <button
+                    type="button"
+                    onClick={() => toggle(i)}
+                    className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left"
+                    aria-expanded={isOpen}
+                >
+                    <span className="text-[13px] font-medium text-zinc-200">{item.question}</span>
+                    <FiChevronDown
+                        className={`w-3.5 h-3.5 text-zinc-500 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                </button>
+                <div
+                    className={`overflow-hidden transition-all duration-200 ${isOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
+                >
+                    <p className="px-4 pb-3 text-[12px] text-zinc-500 leading-relaxed">{item.answer}</p>
+                </div>
+            </div>
+        );
+    };
+
     return (
-        <section className="w-full max-w-2xl mx-auto">
-            <h2 className="text-center text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-6">
+        <section className="w-full">
+            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-600 mb-5">
                 Frequently asked questions
             </h2>
             <div className="space-y-2">
-                {FAQ_ITEMS.map((item, i) => {
-                    const isOpen = openIndex === i;
-                    return (
-                        <div
-                            key={item.question}
-                            className="rounded-xl bg-white/[0.02] border border-white/[0.05] overflow-hidden transition-colors hover:border-white/[0.08]"
-                        >
-                            <button
-                                type="button"
-                                onClick={() => toggle(i)}
-                                className="w-full flex items-center justify-between gap-4 px-5 py-4 text-left"
-                                aria-expanded={isOpen}
-                            >
-                                <span className="text-sm font-medium text-zinc-200">{item.question}</span>
-                                <FiChevronDown
-                                    className={`w-4 h-4 text-zinc-500 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                                />
-                            </button>
-                            <div
-                                className={`overflow-hidden transition-all duration-200 ${isOpen ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'}`}
-                            >
-                                <p className="px-5 pb-4 text-sm text-zinc-500 leading-relaxed">{item.answer}</p>
-                            </div>
-                        </div>
-                    );
-                })}
+                {FAQ_ITEMS.map((item, i) => renderItem(item, i))}
             </div>
         </section>
     );

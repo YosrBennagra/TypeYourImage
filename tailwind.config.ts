@@ -10,11 +10,16 @@ export default {
       },
       colors: {
         neon: {
-          cyan: '#00f0ff',
-          purple: '#a855f7',
-          green: '#34d399',
-          pink: '#f472b6',
-          yellow: '#fbbf24',
+          cyan: '#e07850',
+          purple: '#9b8ec8',
+          green: '#5fad78',
+          pink: '#c4707e',
+          yellow: '#cca040',
+          orange: '#cc8855',
+        },
+        surface: {
+          DEFAULT: '#111111',
+          raised: '#1a1a1a',
         },
       },
     },

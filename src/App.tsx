@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { FiRefreshCw, FiZap, FiLoader } from 'react-icons/fi';
 import {
   type OutputFormat,
@@ -9,9 +9,11 @@ import {
   getCategoryConfig,
   SIZE_WARNING_THRESHOLD,
 } from './lib/constants';
-import { loadImage, convertImage, downloadBlob, getBaseName } from './lib/converter';
+import { loadImage, convertImage, isCanvasFormat, downloadBlob, getBaseName } from './lib/converter';
 import { convertVideo } from './lib/video-converter';
 import { convertAudio } from './lib/audio-converter';
+import { convertSubtitle } from './lib/subtitle-converter';
+import { convertData } from './lib/data-converter';
 import { isFFmpegLoaded, getFFmpeg } from './lib/ffmpeg-loader';
 import { CategoryTabs } from './components/category-tabs';
 import { DropZone } from './components/drop-zone';
@@ -27,6 +29,7 @@ import { Footer } from './components/footer';
 import { HowItWorks } from './components/how-it-works';
 import { FaqSection } from './components/faq-section';
 import { SupportedFormats } from './components/supported-formats';
+import { ServerComingSoon } from './components/server-coming-soon';
 import { useToast } from './hooks/use-toast';
 import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
 import { useConversionTimer } from './hooks/use-conversion-timer';
@@ -45,6 +48,22 @@ interface ConversionState {
   readonly format: OutputFormat;
 }
 
+/** Inline text preview for subtitle / data results */
+function TextPreview({ blob }: { blob: Blob }) {
+  const [text, setText] = useState<string | null>(null);
+  useEffect(() => { blob.text().then(setText); }, [blob]);
+
+  if (!text) return null;
+  return (
+    <div className="glass-card p-5 animate-fade-in">
+      <h2 className="section-title mb-3">Preview</h2>
+      <pre className="max-h-48 overflow-auto rounded-lg bg-black/30 border border-white/[0.05] p-3 text-xs text-zinc-400 font-mono whitespace-pre-wrap break-words">
+        {text.length > 4000 ? text.slice(0, 4000) + '\n\n… (truncated)' : text}
+      </pre>
+    </div>
+  );
+}
+
 export default function App() {
   const [category, setCategory] = useState<ConverterCategory>('image');
   const [source, setSource] = useState<SourceFile | null>(null);
@@ -56,6 +75,7 @@ export default function App() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [conversionProgress, setConversionProgress] = useState(0);
   const [conversionTimeMs, setConversionTimeMs] = useState(0);
+  const [showServerPanel, setShowServerPanel] = useState(false);
   const resultPreviewUrl = useRef<string | null>(null);
   const { toast } = useToast();
   const timer = useConversionTimer();
@@ -98,11 +118,20 @@ export default function App() {
 
       try {
         const detectedCategory = detectCategoryFromFile(file) ?? category;
-        if (detectedCategory !== category) {
-          setCategory(detectedCategory);
+        // Stay in video-to-audio / video-to-animated mode when a video file is dropped
+        const effectiveCategory =
+          (category === 'video-to-audio' || category === 'video-to-animated') && detectedCategory === 'video'
+            ? category
+            : detectedCategory;
+
+        // Close server panel if open
+        if (showServerPanel) setShowServerPanel(false);
+
+        if (effectiveCategory !== category) {
+          setCategory(effectiveCategory);
         }
 
-        const catConfig = getCategoryConfig(detectedCategory);
+        const catConfig = getCategoryConfig(effectiveCategory);
         if (file.size > catConfig.maxSizeMB * 1024 * 1024) {
           setError(
             `File exceeds ${catConfig.maxSizeMB} MB limit for ${catConfig.label.toLowerCase()} conversion.`,
@@ -113,25 +142,43 @@ export default function App() {
 
         const previewUrl = URL.createObjectURL(file);
 
-        if (detectedCategory === 'image') {
-          const element = await loadImage(file);
-          const hasAlpha = file.type === 'image/svg+xml' || detectAlpha(element);
+        if (effectiveCategory === 'image') {
+          // Try to load as browser image; exotic formats may fail
+          let element: HTMLImageElement | undefined;
+          let hasAlpha = false;
+          let dims: { width: number; height: number } | undefined;
+
+          try {
+            element = await loadImage(file);
+            hasAlpha = file.type === 'image/svg+xml' || detectAlpha(element);
+            dims = {
+              width: element.naturalWidth || element.width,
+              height: element.naturalHeight || element.height,
+            };
+          } catch {
+            // Browser can't render this format — FFmpeg will handle conversion
+          }
 
           setSource({
             file,
-            category: detectedCategory,
+            category: effectiveCategory,
             previewUrl,
             imageElement: element,
-            dimensions: {
-              width: element.naturalWidth || element.width,
-              height: element.naturalHeight || element.height,
-            },
+            dimensions: dims,
             hasAlpha,
           });
+
+          // Pre-load FFmpeg if the image couldn't be loaded in browser
+          if (!element && !isFFmpegLoaded()) {
+            getFFmpeg().catch(() => { });
+          }
+        } else if (effectiveCategory === 'subtitle' || effectiveCategory === 'data') {
+          // Text-based categories — no FFmpeg needed
+          setSource({ file, category: effectiveCategory, previewUrl });
         } else {
           setSource({
             file,
-            category: detectedCategory,
+            category: effectiveCategory,
             previewUrl,
           });
 
@@ -146,7 +193,7 @@ export default function App() {
         setStatus('error');
       }
     },
-    [category, detectAlpha],
+    [category, detectAlpha, showServerPanel],
   );
 
   // ── Handle conversion ────────────────────────────────────────
@@ -163,8 +210,28 @@ export default function App() {
       let blob: Blob;
 
       if (source.category === 'image') {
-        setStatus('converting');
-        blob = await convertImage(source.imageElement!, selectedFormat, quality);
+        const useCanvas = isCanvasFormat(selectedFormat.id) && !!source.imageElement;
+
+        if (useCanvas) {
+          setStatus('converting');
+        } else if (!isFFmpegLoaded()) {
+          setStatus('loading-engine');
+        }
+
+        const progressCallback = useCanvas
+          ? undefined
+          : (p: number) => {
+            setStatus('converting');
+            setConversionProgress(p);
+          };
+
+        blob = await convertImage(
+          source.imageElement,
+          source.file,
+          selectedFormat,
+          quality,
+          progressCallback,
+        );
       } else {
         if (!isFFmpegLoaded()) {
           setStatus('loading-engine');
@@ -175,9 +242,20 @@ export default function App() {
           setConversionProgress(p);
         };
 
-        if (source.category === 'video') {
+        if (source.category === 'video' || source.category === 'video-to-animated') {
           blob = await convertVideo(source.file, selectedFormat, quality, progressCallback);
+        } else if (source.category === 'subtitle') {
+          setStatus('converting');
+          blob = await convertSubtitle(source.file, selectedFormat, quality, (p) => {
+            setConversionProgress(p);
+          });
+        } else if (source.category === 'data') {
+          setStatus('converting');
+          blob = await convertData(source.file, selectedFormat, quality, (p) => {
+            setConversionProgress(p);
+          });
         } else {
+          // audio and video-to-audio both use the audio converter
           blob = await convertAudio(source.file, selectedFormat, quality, progressCallback);
         }
       }
@@ -257,10 +335,17 @@ export default function App() {
   const handleCategoryChange = useCallback(
     (newCategory: ConverterCategory) => {
       if (source) return;
+      setShowServerPanel(false);
       setCategory(newCategory);
     },
     [source],
   );
+
+  // ── Server panel toggle ──────────────────────────────────────
+  const handleServerTabClick = useCallback(() => {
+    if (source) return;
+    setShowServerPanel((prev) => !prev);
+  }, [source]);
 
   // ── Keyboard shortcuts ───────────────────────────────────────
   useKeyboardShortcuts({
@@ -283,17 +368,16 @@ export default function App() {
         Skip to content
       </a>
 
-      {/* ── Ambient glow ─────────────────────────────────── */}
+      {/* ── Ambient warmth ────────────────────────────────── */}
       <div className="fixed inset-0 pointer-events-none z-0" aria-hidden="true">
-        <div className="absolute top-[-15%] left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-neon-cyan/[0.03] blur-[100px]" />
+        <div className="absolute top-0 left-0 right-0 h-[300px] bg-gradient-to-b from-neon-cyan/[0.015] to-transparent" />
       </div>
 
       {/* ── Header (workspace only) ──────────────────────── */}
       {source && (
-        <header className="sticky top-0 shrink-0 h-14 border-b border-white/[0.06] bg-zinc-950/80 backdrop-blur-sm flex items-center px-6 z-20">
-          <div className="flex items-center gap-2.5">
-            <FiZap className="w-4 h-4 text-neon-cyan" />
-            <span className="text-sm font-semibold tracking-tight">
+        <header className="sticky top-0 shrink-0 h-14 border-b border-white/[0.05] bg-[#0a0a0a]/90 backdrop-blur-md flex items-center px-6 z-20">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold tracking-tight">
               All<span className="text-neon-cyan">Your</span>Types
             </span>
           </div>
@@ -316,257 +400,373 @@ export default function App() {
       <main id="main-content" className="flex-1 relative z-10">
         {!source ? (
           /* ── Landing ─────────────────────────────────── */
-          <div className="flex flex-col items-center">
-            {/* Hero area */}
-            <div className="w-full flex items-center justify-center min-h-[calc(100vh-60px)] py-12">
-              <div className="w-full max-w-2xl flex flex-col items-center gap-8 px-4">
-                {/* Brand */}
-                <div className="text-center animate-fade-in">
-                  <div className="flex items-center justify-center gap-2.5 mb-3">
-                    <div className="w-10 h-10 rounded-xl bg-neon-cyan/[0.08] border border-neon-cyan/20 flex items-center justify-center">
-                      <FiZap className="w-5 h-5 text-neon-cyan" />
+          <div className="flex flex-col lg:flex-row min-h-screen">
+
+            {/* ── Left rail (spans full page height) ──── */}
+            <aside className="shrink-0 lg:w-[220px] lg:border-r border-white/[0.05] lg:sticky lg:top-0 lg:h-screen lg:overflow-y-auto p-5 flex flex-col gap-6">
+              {/* Brand */}
+              <div className="animate-fade-in">
+                <h1 className="text-xl font-bold tracking-tighter leading-none">
+                  All<span className="text-neon-cyan">Your</span>Types
+                </h1>
+                <p className="text-[11px] text-zinc-600 mt-1">
+                  Browser-native converter
+                </p>
+              </div>
+
+              {/* Category tabs (vertical) */}
+              <div className="animate-fade-in-delay-1">
+                <p className="text-[9px] uppercase tracking-widest text-zinc-600 mb-2 px-1">Categories</p>
+                <CategoryTabs
+                  active={category}
+                  onChange={handleCategoryChange}
+                  disabled={status === 'uploading'}
+                  showServerPanel={showServerPanel}
+                  onServerTabClick={handleServerTabClick}
+                />
+              </div>
+
+              {/* Feature list (bottom of rail) */}
+              <div className="mt-auto animate-fade-in-delay-3 hidden lg:block">
+                <div className="h-px bg-white/[0.04] mb-3" />
+                <FeatureCards />
+              </div>
+            </aside>
+
+            {/* ── Right column (hero + below-fold, seamlessly) */}
+            <div className="flex-1 flex flex-col min-w-0">
+
+              {/* Hero — two sub-columns inside the right area */}
+              <div className="flex flex-col lg:flex-row min-h-screen">
+
+                {/* Left sub-column: hero text + drop zone */}
+                <div className="flex-1 flex flex-col justify-center px-6 lg:px-10 py-10 lg:border-r border-white/[0.04]">
+                  <div className="animate-fade-in mb-8">
+                    <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tighter leading-[0.95] text-zinc-100">
+                      Convert anything,<br />
+                      <span className="text-neon-cyan">privately.</span>
+                    </h2>
+                    <p className="text-sm text-zinc-500 mt-3 max-w-md leading-relaxed">
+                      Images, videos, audio, subtitles & data — 200+ formats, zero uploads.
+                    </p>
+                  </div>
+
+                  {showServerPanel && (
+                    <div className="animate-fade-in-delay-2">
+                      <ServerComingSoon />
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight">
-                      All<span className="text-neon-cyan">Your</span>Types
-                    </h1>
+                  )}
+
+                  {!showServerPanel && (
+                    <div className="animate-fade-in-delay-2">
+                      <DropZone
+                        category={category}
+                        onFileSelected={handleFileSelected}
+                        onCategorySwitch={setCategory}
+                        disabled={status === 'uploading'}
+                      />
+                    </div>
+                  )}
+
+                  {status === 'uploading' && (
+                    <div className="flex items-center gap-2 text-sm text-zinc-500 mt-4">
+                      <FiLoader className="w-4 h-4 animate-spinner" />
+                      Loading file…
+                    </div>
+                  )}
+
+                  <div className="mt-6 lg:hidden animate-fade-in-delay-3">
+                    <FeatureCards />
                   </div>
-                  <p className="text-base text-zinc-500 mt-1 max-w-md mx-auto">
-                    Convert images, videos & audio instantly — right in your browser.
-                    <br />
-                    <span className="text-zinc-600">No uploads. No sign-up. 100% private.</span>
-                  </p>
                 </div>
 
-                {/* Category tabs */}
-                <div className="animate-fade-in-delay-1">
-                  <CategoryTabs
-                    active={category}
-                    onChange={handleCategoryChange}
-                    disabled={status === 'uploading'}
-                  />
-                </div>
-
-                {/* Drop zone */}
-                <div className="w-full animate-fade-in-delay-2">
-                  <DropZone
-                    category={category}
-                    onFileSelected={handleFileSelected}
-                    onCategorySwitch={setCategory}
-                    disabled={status === 'uploading'}
-                  />
-                </div>
-
-                {status === 'uploading' && (
-                  <div className="flex items-center gap-2 text-sm text-zinc-500">
-                    <FiLoader className="w-4 h-4 animate-spinner" />
-                    Loading file…
+                {/* Right sub-column: info panel */}
+                <div className="hidden lg:flex w-[280px] xl:w-[320px] shrink-0 flex-col gap-4 px-7 py-10 justify-center animate-fade-in-delay-1">
+                  {/* Stat cards */}
+                  <div className="rounded-2xl bg-[#0e0e0e] border border-white/[0.04] p-5 space-y-4">
+                    <div>
+                      <span className="text-4xl font-bold tracking-tighter text-neon-cyan">200+</span>
+                      <p className="text-xs text-zinc-500 mt-0.5">supported formats</p>
+                    </div>
+                    <div className="h-px bg-white/[0.04]" />
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: 'Image', count: '55+', color: 'text-neon-cyan' },
+                        { label: 'Video', count: '13+', color: 'text-neon-purple' },
+                        { label: 'Audio', count: '14+', color: 'text-neon-green' },
+                        { label: 'Data', count: '5', color: 'text-zinc-400' },
+                      ].map((s) => (
+                        <div key={s.label} className="rounded-xl bg-white/[0.02] border border-white/[0.04] p-2.5">
+                          <span className={`text-xl font-bold ${s.color}`}>{s.count}</span>
+                          <p className="text-[10px] text-zinc-600 mt-0.5">{s.label}</p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                )}
 
-                {/* Feature badges */}
-                <div className="w-full animate-fade-in-delay-3">
-                  <FeatureCards />
+                  {/* Privacy card */}
+                  <div className="rounded-2xl bg-[#0e0e0e] border border-white/[0.04] p-5 space-y-3">
+                    <p className="text-[11px] uppercase tracking-widest text-zinc-600 font-semibold">Privacy</p>
+                    {[
+                      'Files never leave your device',
+                      'No account needed',
+                      'No file size tracking',
+                      'Works offline',
+                    ].map((line) => (
+                      <div key={line} className="flex items-center gap-2">
+                        <div className="w-1 h-1 rounded-full bg-neon-green/60 shrink-0" />
+                        <span className="text-[12px] text-zinc-400">{line}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Paste tip */}
+                  <div className="rounded-2xl bg-[#0e0e0e] border border-white/[0.04] p-4 flex items-center gap-3">
+                    <kbd className="text-[11px] font-mono px-2 py-1 rounded-lg border border-white/[0.08] bg-white/[0.03] text-zinc-400 shrink-0">
+                      Ctrl+V
+                    </kbd>
+                    <span className="text-[12px] text-zinc-500">Paste an image directly from clipboard</span>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Below-the-fold sections */}
-            <div className="w-full flex flex-col items-center gap-16 px-4 pb-20">
-              <HowItWorks />
-              <SupportedFormats />
-              <FaqSection />
+              {/* Below-fold — full width of right column */}
+              <div className="border-t border-white/[0.04] px-6 lg:px-10 py-12 space-y-5">
+                <div className="rounded-2xl bg-[#0e0e0e] border border-white/[0.04] p-6">
+                  <HowItWorks />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                  <div className="rounded-2xl bg-[#0e0e0e] border border-white/[0.04] p-6">
+                    <SupportedFormats />
+                  </div>
+                  <div className="rounded-2xl bg-[#0e0e0e] border border-white/[0.04] p-6">
+                    <FaqSection />
+                  </div>
+                </div>
+              </div>
+
             </div>
           </div>
         ) : (
           /* ── Workspace ───────────────────────────────── */
-          <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 p-5">
-            {/* Left: Source */}
-            <div className="lg:col-span-5">
-              <div className="glass-card p-5 flex flex-col lg:sticky lg:top-20">
-                <h2 className="section-title mb-4">Source File</h2>
-
-                <SourcePreview
-                  file={source.file}
-                  previewUrl={source.previewUrl}
-                  category={source.category}
-                  dimensions={source.dimensions}
-                />
-
-                {showSizeWarning && (
-                  <div className="mt-3 px-3 py-2 rounded-lg bg-neon-yellow/[0.05] border border-neon-yellow/15">
-                    <p className="text-xs text-neon-yellow/70">
-                      Large file — conversion may take a while
-                    </p>
-                  </div>
-                )}
-
+          <div className="max-w-2xl mx-auto flex flex-col gap-4 p-5 pt-6">
+            {/* Source: compact horizontal card */}
+            <div className="glass-card p-4 animate-fade-in">
+              <div className="flex items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <h2 className="section-title mb-3">Source File</h2>
+                  <SourcePreview
+                    file={source.file}
+                    previewUrl={source.previewUrl}
+                    category={source.category}
+                    dimensions={source.dimensions}
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleReset}
-                  className="mt-auto pt-4 text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
+                  className="shrink-0 text-xs text-zinc-600 hover:text-zinc-300 transition-colors mt-1"
                 >
                   Change file
                 </button>
               </div>
+
+              {showSizeWarning && (
+                <div className="mt-3 px-3 py-2 rounded-lg bg-neon-yellow/[0.05] border border-neon-yellow/15">
+                  <p className="text-xs text-neon-yellow/70">
+                    Large file — conversion may take a while
+                  </p>
+                </div>
+              )}
             </div>
 
-            {/* Right: Convert */}
-            <div className="lg:col-span-7 flex flex-col gap-4">
-              {/* Format selector */}
-              <div className="glass-card p-5 animate-fade-in">
-                <h2 className="section-title mb-4">Output Format</h2>
-                <FormatSelector
-                  category={source.category}
-                  selected={selectedFormat}
-                  onSelect={(fmt) => {
-                    setSelectedFormat(fmt);
-                    setResult(null);
+            {/* Format selector */}
+            <div className="glass-card p-5 animate-fade-in">
+              <h2 className="section-title mb-4">Output Format</h2>
+              <FormatSelector
+                category={source.category}
+                selected={selectedFormat}
+                onSelect={(fmt) => {
+                  setSelectedFormat(fmt);
+                  setResult(null);
+                  setError(null);
+                  setStatus('ready');
+                }}
+                sourceFormat={source.file.type}
+              />
+            </div>
+
+            {/* Options */}
+            {selectedFormat && (
+              <div className="glass-card p-5 space-y-3 animate-fade-in">
+                {selectedFormat.supportsQuality && (
+                  <QualitySlider quality={quality} onChange={setQuality} />
+                )}
+
+                {source.category === 'image' && (
+                  <TransparencyNotice
+                    sourceHasAlpha={source.hasAlpha ?? false}
+                    targetFormat={selectedFormat}
+                  />
+                )}
+
+                <FormatNotes format={selectedFormat} category={source.category} />
+
+                {!selectedFormat.supportsQuality && (
+                  <p className="text-xs text-zinc-600">
+                    No quality settings for {selectedFormat.label}.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Convert button */}
+            {selectedFormat && !result && (
+              <button
+                type="button"
+                onClick={handleConvert}
+                disabled={status === 'converting' || status === 'loading-engine'}
+                className="convert-btn"
+              >
+                {status === 'loading-engine' ? (
+                  <>
+                    <FiLoader className="w-4 h-4 animate-spinner" />
+                    Loading engine…
+                  </>
+                ) : status === 'converting' ? (
+                  <>
+                    <FiLoader className="w-4 h-4 animate-spinner" />
+                    Converting…
+                  </>
+                ) : (
+                  <>
+                    <FiZap className="w-4 h-4" />
+                    Convert to {selectedFormat.label}
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* Progress */}
+            {status === 'converting' && (source.category !== 'image' || (!source.imageElement || !isCanvasFormat(selectedFormat?.id ?? ''))) && (
+              <ProgressBar progress={conversionProgress} label="Processing" />
+            )}
+
+            {status === 'loading-engine' && (
+              <p className="text-xs text-zinc-600 text-center">
+                Downloading engine (~30 MB, one-time)…
+              </p>
+            )}
+
+            {/* Result */}
+            {result && (
+              <div className="glass-card-success p-5 animate-fade-in">
+                <ConversionResult
+                  originalSize={source.file.size}
+                  convertedSize={result.blob.size}
+                  format={result.format}
+                  onDownload={handleDownload}
+                  isDownloading={isDownloading}
+                  conversionTimeMs={conversionTimeMs}
+                  onCopyToClipboard={
+                    source.category === 'image' && result.format.mimeType === 'image/png'
+                      ? handleCopyToClipboard
+                      : undefined
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={handleConvertAnother}
+                  className="mt-3 w-full text-xs text-zinc-600 hover:text-zinc-300 text-center transition-colors"
+                >
+                  Convert to another format
+                </button>
+              </div>
+            )}
+
+            {/* Error */}
+            {error && (
+              <div className="glass-card-error p-5 animate-fade-in">
+                <p className="text-sm text-red-400">{error}</p>
+                <button
+                  type="button"
+                  onClick={() => {
                     setError(null);
                     setStatus('ready');
                   }}
-                  sourceFormat={source.file.type}
-                />
-              </div>
-
-              {/* Options */}
-              {selectedFormat && (
-                <div className="glass-card p-5 space-y-3 animate-fade-in">
-                  {selectedFormat.supportsQuality && (
-                    <QualitySlider quality={quality} onChange={setQuality} />
-                  )}
-
-                  {source.category === 'image' && (
-                    <TransparencyNotice
-                      sourceHasAlpha={source.hasAlpha ?? false}
-                      targetFormat={selectedFormat}
-                    />
-                  )}
-
-                  <FormatNotes format={selectedFormat} category={source.category} />
-
-                  {!selectedFormat.supportsQuality && (
-                    <p className="text-xs text-zinc-600">
-                      No quality settings for {selectedFormat.label}.
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {/* Convert button */}
-              {selectedFormat && !result && (
-                <button
-                  type="button"
-                  onClick={handleConvert}
-                  disabled={status === 'converting' || status === 'loading-engine'}
-                  className="convert-btn"
+                  className="mt-2 text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
                 >
-                  {status === 'loading-engine' ? (
-                    <>
-                      <FiLoader className="w-4 h-4 animate-spinner" />
-                      Loading engine…
-                    </>
-                  ) : status === 'converting' ? (
-                    <>
-                      <FiLoader className="w-4 h-4 animate-spinner" />
-                      Converting…
-                    </>
-                  ) : (
-                    <>
-                      <FiZap className="w-4 h-4" />
-                      Convert to {selectedFormat.label}
-                    </>
-                  )}
+                  Dismiss
                 </button>
-              )}
+              </div>
+            )}
 
-              {/* Progress */}
-              {status === 'converting' && source.category !== 'image' && (
-                <ProgressBar progress={conversionProgress} label="Processing" />
-              )}
-
-              {status === 'loading-engine' && (
-                <p className="text-xs text-zinc-600 text-center">
-                  Downloading engine (~30 MB, one-time)…
-                </p>
-              )}
-
-              {/* Result */}
-              {result && (
-                <div className="glass-card-success p-5 animate-fade-in">
-                  <ConversionResult
-                    originalSize={source.file.size}
-                    convertedSize={result.blob.size}
-                    format={result.format}
-                    onDownload={handleDownload}
-                    isDownloading={isDownloading}
-                    conversionTimeMs={conversionTimeMs}
-                    onCopyToClipboard={
-                      source.category === 'image' && result.format.mimeType === 'image/png'
-                        ? handleCopyToClipboard
-                        : undefined
-                    }
-                  />
-                  <button
-                    type="button"
-                    onClick={handleConvertAnother}
-                    className="mt-3 w-full text-xs text-zinc-600 hover:text-zinc-300 text-center transition-colors"
-                  >
-                    Convert to another format
-                  </button>
-                </div>
-              )}
-
-              {/* Error */}
-              {error && (
-                <div className="glass-card-error p-5 animate-fade-in">
-                  <p className="text-sm text-red-400">{error}</p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setError(null);
-                      setStatus('ready');
-                    }}
-                    className="mt-2 text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              )}
-
-              {/* Converted preview (image) */}
-              {result && source.category === 'image' && (
-                <div className="glass-card p-5 animate-fade-in">
-                  <h2 className="section-title mb-3">Preview</h2>
-                  <div className="flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-white/[0.04]">
-                    <img
-                      src={URL.createObjectURL(result.blob)}
-                      alt="Converted"
-                      className="max-w-full max-h-40 object-contain"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Converted preview (video) */}
-              {result && source.category === 'video' && result.format.id !== 'video-gif' && (
-                <div className="glass-card p-5 animate-fade-in">
-                  <h2 className="section-title mb-3">Preview</h2>
-                  <video
+            {/* Converted preview (image) */}
+            {result && source.category === 'image' && (
+              <div className="glass-card p-5 animate-fade-in">
+                <h2 className="section-title mb-3">Preview</h2>
+                <div className="flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-white/[0.05]">
+                  <img
                     src={URL.createObjectURL(result.blob)}
-                    controls
-                    className="max-w-full max-h-40 rounded-lg"
-                  >
-                    <track kind="captions" />
-                  </video>
+                    alt="Converted"
+                    className="max-w-full max-h-40 object-contain"
+                  />
                 </div>
-              )}
-            </div>
+              </div>
+            )}
+
+            {/* Converted preview (video) */}
+            {result && source.category === 'video' && !result.format.mimeType.startsWith('image/') && (
+              <div className="glass-card p-5 animate-fade-in">
+                <h2 className="section-title mb-3">Preview</h2>
+                <video
+                  src={URL.createObjectURL(result.blob)}
+                  controls
+                  className="max-w-full max-h-40 rounded-lg"
+                >
+                  <track kind="captions" />
+                </video>
+              </div>
+            )}
+
+            {/* Converted preview (animated image from video) */}
+            {result && (source.category === 'video-to-animated' || (source.category === 'video' && result.format.mimeType.startsWith('image/'))) && (
+              <div className="glass-card p-5 animate-fade-in">
+                <h2 className="section-title mb-3">Preview</h2>
+                <div className="flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-white/[0.05]">
+                  <img
+                    src={URL.createObjectURL(result.blob)}
+                    alt="Animated"
+                    className="max-w-full max-h-40 object-contain"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Converted preview (audio or video-to-audio) */}
+            {result && (source.category === 'audio' || source.category === 'video-to-audio') && (
+              <div className="glass-card p-5 animate-fade-in">
+                <h2 className="section-title mb-3">Preview</h2>
+                <audio
+                  src={URL.createObjectURL(result.blob)}
+                  controls
+                  className="w-full"
+                >
+                  <track kind="captions" />
+                </audio>
+              </div>
+            )}
+
+            {/* Converted preview (subtitle / data — text) */}
+            {result && (source.category === 'subtitle' || source.category === 'data') && (
+              <TextPreview blob={result.blob} />
+            )}
           </div>
         )}
       </main>
 
       {/* ── Footer ───────────────────────────────────────── */}
-      <footer className="shrink-0 relative z-10 border-t border-white/[0.04]">
+      <footer className="shrink-0 relative z-10 border-t border-white/[0.05]">
         <Footer />
       </footer>
     </div>

@@ -51,17 +51,36 @@ function buildAudioArgs(
   const bitrate = `${Math.round(96 + quality * 224)}k`;
 
   switch (format.id) {
+    // ── Common Lossy ───────────────────────────────────────────
     case 'mp3':
-      return ['-i', input, '-c:a', 'libmp3lame', '-b:a', bitrate, '-y', output];
-    case 'wav':
-      return ['-i', input, '-c:a', 'pcm_s16le', '-y', output];
-    case 'ogg':
-      return ['-i', input, '-c:a', 'libvorbis', '-b:a', bitrate, '-y', output];
+      return ['-i', input, '-vn', '-c:a', 'libmp3lame', '-b:a', bitrate, '-y', output];
     case 'aac':
-      return ['-i', input, '-c:a', 'aac', '-b:a', bitrate, '-y', output];
+      return ['-i', input, '-vn', '-c:a', 'aac', '-b:a', bitrate, '-y', output];
+    case 'm4a':
+      return ['-i', input, '-vn', '-c:a', 'aac', '-b:a', bitrate, '-f', 'ipod', '-y', output];
+    case 'ogg':
+      return ['-i', input, '-vn', '-c:a', 'libvorbis', '-b:a', bitrate, '-y', output];
+    case 'opus':
+      return ['-i', input, '-vn', '-c:a', 'libopus', '-b:a', bitrate, '-y', output];
+    case 'wma':
+      return ['-i', input, '-vn', '-c:a', 'wmav2', '-b:a', bitrate, '-y', output];
+    // ── Broadcast / Specialty ──────────────────────────────────
+    case 'ac3':
+      return ['-i', input, '-vn', '-c:a', 'ac3', '-b:a', bitrate, '-y', output];
+    case 'mp2':
+      return ['-i', input, '-vn', '-c:a', 'mp2', '-b:a', bitrate, '-y', output];
+    case 'amr':
+      return ['-i', input, '-vn', '-c:a', 'libopencore_amrnb', '-ar', '8000', '-ac', '1', '-y', output];
+    // ── Lossless ───────────────────────────────────────────────
+    case 'wav':
+      return ['-i', input, '-vn', '-c:a', 'pcm_s16le', '-y', output];
     case 'flac':
-      return ['-i', input, '-c:a', 'flac', '-y', output];
+      return ['-i', input, '-vn', '-c:a', 'flac', '-y', output];
+    case 'alac':
+      return ['-i', input, '-vn', '-c:a', 'alac', '-f', 'ipod', '-y', output];
+    case 'aiff':
+      return ['-i', input, '-vn', '-c:a', 'pcm_s16be', '-f', 'aiff', '-y', output];
     default:
-      return ['-i', input, '-y', output];
+      return ['-i', input, '-vn', '-y', output];
   }
 }

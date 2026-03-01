@@ -74,7 +74,7 @@ function ToastItem({
 }) {
     return (
         <div
-            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-xl border backdrop-blur-md shadow-lg animate-toast-in ${BG_MAP[toast.type]}`}
+            className={`pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border backdrop-blur-md shadow-lg animate-toast-in ${BG_MAP[toast.type]}`}
             role="alert"
         >
             {ICON_MAP[toast.type]}

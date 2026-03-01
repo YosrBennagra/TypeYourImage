@@ -1,7 +1,7 @@
 {
     "name": "AllYourTypes",
     "short_name": "AllYourTypes",
-    "description": "Free online file converter — images, videos, and audio. 100% private, runs in your browser.",
+    "description": "Free online file converter — 200+ formats for images, video, audio, subtitles & data. SRT/VTT, JSON/CSV/YAML/XML, animated GIFs, video-to-audio extraction. 100% private, runs in your browser.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#09090b",

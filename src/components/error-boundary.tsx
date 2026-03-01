@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<Props, State> {
     render() {
         if (this.state.hasError) {
             return (
-                <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
+                <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6">
                     <div className="max-w-md w-full text-center space-y-6">
                         <div className="w-16 h-16 mx-auto rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center">
                             <FiAlertTriangle className="w-8 h-8 text-red-400" />
@@ -49,7 +49,7 @@ export class ErrorBoundary extends Component<Props, State> {
                         </div>
 
                         {this.state.error && (
-                            <div className="px-4 py-3 rounded-lg bg-white/[0.02] border border-white/[0.06] text-left">
+                            <div className="px-4 py-3 rounded-lg bg-surface border border-white/[0.06] text-left">
                                 <p className="text-xs font-mono text-zinc-600 break-all">
                                     {this.state.error.message}
                                 </p>
@@ -60,7 +60,7 @@ export class ErrorBoundary extends Component<Props, State> {
                             <button
                                 type="button"
                                 onClick={this.handleReset}
-                                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 bg-white/[0.05] border border-white/[0.08] hover:bg-white/[0.08] transition-colors"
+                                className="px-4 py-2 rounded-lg text-sm font-medium text-zinc-300 bg-surface border border-white/[0.08] hover:bg-surface-raised transition-colors"
                             >
                                 Try Again
                             </button>

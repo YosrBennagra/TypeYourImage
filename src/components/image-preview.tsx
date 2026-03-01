@@ -11,7 +11,7 @@ export function ImagePreview({ file, previewUrl, dimensions }: ImagePreviewProps
   return (
     <div className="flex flex-col gap-3 h-full">
       {/* Preview thumbnail */}
-      <div className="flex-1 min-h-0 flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-zinc-800">
+      <div className="flex-1 min-h-0 flex items-center justify-center rounded-xl overflow-hidden checkerboard border border-white/[0.05]">
         <img
           src={previewUrl}
           alt="Preview"
@@ -39,7 +39,7 @@ export function ImagePreview({ file, previewUrl, dimensions }: ImagePreviewProps
               {dimensions.width} × {dimensions.height}
             </span>
           )}
-          <span className="px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 text-[10px] uppercase">
+          <span className="px-1.5 py-0.5 rounded bg-surface text-zinc-400 text-[10px] uppercase">
             {file.type.split('/')[1]}
           </span>
         </div>

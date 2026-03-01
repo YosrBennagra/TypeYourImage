@@ -17,12 +17,20 @@ const CATEGORY_LABELS: Record<ConverterCategory, string> = {
   image: 'image',
   video: 'video',
   audio: 'audio file',
+  'video-to-audio': 'video',
+  'video-to-animated': 'video',
+  subtitle: 'subtitle file',
+  data: 'data file',
 };
 
 const FORMAT_BADGES: Record<ConverterCategory, readonly string[]> = {
-  image: ['PNG', 'JPG', 'WebP', 'GIF', 'SVG', 'BMP'],
-  video: ['MP4', 'WebM', 'AVI', 'MOV', 'MKV'],
-  audio: ['MP3', 'WAV', 'OGG', 'AAC', 'FLAC', 'M4A'],
+  image: ['PNG', 'JPG', 'WebP', 'GIF', 'TIFF', 'AVIF', 'BMP', 'SVG', 'PSD', 'RAW', '+40 more'],
+  video: ['MP4', 'MOV', 'MKV', 'AVI', 'WebM', 'WMV', 'FLV', 'TS', '3GP', '+more'],
+  audio: ['MP3', 'WAV', 'OGG', 'AAC', 'FLAC', 'M4A', 'Opus', 'WMA', 'AIFF', 'AMR', '+more'],
+  'video-to-audio': ['MP4', 'MOV', 'MKV', 'AVI', 'WebM', 'WMV', 'FLV', '+more'],
+  'video-to-animated': ['MP4', 'MOV', 'MKV', 'AVI', 'WebM', 'WMV', '+more'],
+  subtitle: ['SRT', 'VTT'],
+  data: ['JSON', 'CSV', 'TSV', 'YAML', 'XML'],
 };
 
 export function DropZone({ category, onFileSelected, onCategorySwitch, disabled = false }: DropZoneProps) {
@@ -49,7 +57,7 @@ export function DropZone({ category, onFileSelected, onCategorySwitch, disabled 
       if (!file) return;
 
       const detected = detectCategoryFromFile(file);
-      if (detected && detected !== category && onCategorySwitch) {
+      if (detected && detected !== category && !(category === 'video-to-audio' && detected === 'video') && !(category === 'video-to-animated' && detected === 'video') && onCategorySwitch) {
         onCategorySwitch(detected);
       }
 
@@ -85,7 +93,7 @@ export function DropZone({ category, onFileSelected, onCategorySwitch, disabled 
       if (!file) return;
 
       const detected = detectCategoryFromFile(file);
-      if (detected && detected !== category && onCategorySwitch) {
+      if (detected && detected !== category && !(category === 'video-to-audio' && detected === 'video') && !(category === 'video-to-animated' && detected === 'video') && onCategorySwitch) {
         onCategorySwitch(detected);
       }
 
@@ -117,8 +125,8 @@ export function DropZone({ category, onFileSelected, onCategorySwitch, disabled 
         ${disabled ? 'opacity-50 pointer-events-none' : ''}
       `}
     >
-      <div className="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center">
-        <FiUploadCloud className="w-6 h-6 text-zinc-400" />
+      <div className="w-14 h-14 rounded-2xl bg-surface border border-white/[0.06] flex items-center justify-center">
+        <FiUploadCloud className="w-7 h-7 text-zinc-500" />
       </div>
 
       <div className="text-center space-y-1.5">
@@ -127,7 +135,7 @@ export function DropZone({ category, onFileSelected, onCategorySwitch, disabled 
         </p>
         <p className="text-sm text-zinc-600">
           or{' '}
-          <span className="text-neon-cyan/70 hover:text-neon-cyan cursor-pointer">
+          <span className="text-neon-cyan/80 hover:text-neon-cyan cursor-pointer underline underline-offset-2 decoration-neon-cyan/30">
             browse files
           </span>
         </p>
@@ -137,7 +145,7 @@ export function DropZone({ category, onFileSelected, onCategorySwitch, disabled 
         {badges.map((fmt) => (
           <span
             key={fmt}
-            className="text-[10px] font-mono font-medium uppercase tracking-wider text-zinc-600 bg-white/[0.03] px-2 py-0.5 rounded-md border border-white/[0.04]"
+            className="text-[10px] font-mono font-medium uppercase tracking-wider text-zinc-600 bg-surface px-2 py-0.5 rounded-full border border-white/[0.05]"
           >
             {fmt}
           </span>

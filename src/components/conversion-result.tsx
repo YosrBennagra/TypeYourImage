@@ -63,7 +63,7 @@ export function ConversionResult({
           type="button"
           onClick={onDownload}
           disabled={isDownloading}
-          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-semibold text-sm bg-neon-cyan text-zinc-950 hover:bg-neon-cyan/90 disabled:opacity-50 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl font-semibold text-sm bg-neon-cyan text-zinc-950 hover:bg-neon-cyan/90 disabled:opacity-50 transition-colors"
         >
           <FiDownload className="w-4 h-4" />
           Download {format.label}
@@ -73,7 +73,7 @@ export function ConversionResult({
           <button
             type="button"
             onClick={onCopyToClipboard}
-            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-400 bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:text-zinc-200 transition-colors"
+            className="flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-medium text-zinc-400 bg-surface border border-white/[0.06] hover:bg-surface-raised hover:text-zinc-200 transition-colors"
             title="Copy to clipboard"
           >
             <FiCopy className="w-4 h-4" />

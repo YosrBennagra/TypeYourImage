@@ -25,7 +25,7 @@ export function StepIndicator({ currentStep }: StepIndicatorProps) {
                 className={`
                   w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-mono font-bold
                   ${isActive
-                    ? 'bg-neon-cyan text-zinc-950'
+                    ? 'bg-neon-cyan text-[#0a0a0a]'
                     : isDone
                       ? 'bg-neon-cyan/15 text-neon-cyan'
                       : 'bg-white/[0.04] text-zinc-600'}
