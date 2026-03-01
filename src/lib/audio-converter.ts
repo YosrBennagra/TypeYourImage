@@ -69,8 +69,6 @@ function buildAudioArgs(
       return ['-i', input, '-vn', '-c:a', 'ac3', '-b:a', bitrate, '-y', output];
     case 'mp2':
       return ['-i', input, '-vn', '-c:a', 'mp2', '-b:a', bitrate, '-y', output];
-    case 'amr':
-      return ['-i', input, '-vn', '-c:a', 'libopencore_amrnb', '-ar', '8000', '-ac', '1', '-y', output];
     // ── Lossless ───────────────────────────────────────────────
     case 'wav':
       return ['-i', input, '-vn', '-c:a', 'pcm_s16le', '-y', output];

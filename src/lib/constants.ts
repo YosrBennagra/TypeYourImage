@@ -31,67 +31,31 @@ export interface CategoryConfig {
 /* ── Image formats ─────────────────────────────────────────── */
 
 export const IMAGE_FORMATS: readonly OutputFormat[] = [
-  // ── Common Raster ──────────────────────────────────────────
-  { id: 'jpeg', label: 'JPG', mimeType: 'image/jpeg', extension: '.jpg', supportsQuality: true, supportsTransparency: false, description: 'Lossy compression, smaller files', group: 'Common Raster' },
-  { id: 'png', label: 'PNG', mimeType: 'image/png', extension: '.png', supportsQuality: false, supportsTransparency: true, description: 'Lossless, supports transparency', group: 'Common Raster' },
-  { id: 'gif', label: 'GIF', mimeType: 'image/gif', extension: '.gif', supportsQuality: false, supportsTransparency: true, description: '256 colors, simple transparency', group: 'Common Raster' },
-  { id: 'bmp', label: 'BMP', mimeType: 'image/bmp', extension: '.bmp', supportsQuality: false, supportsTransparency: false, description: 'Uncompressed bitmap', group: 'Common Raster' },
-  { id: 'tiff', label: 'TIFF', mimeType: 'image/tiff', extension: '.tiff', supportsQuality: false, supportsTransparency: true, description: 'Lossless, professional use', group: 'Common Raster' },
-  { id: 'webp', label: 'WebP', mimeType: 'image/webp', extension: '.webp', supportsQuality: true, supportsTransparency: true, description: 'Modern, excellent compression', group: 'Common Raster' },
-  { id: 'avif', label: 'AVIF', mimeType: 'image/avif', extension: '.avif', supportsQuality: true, supportsTransparency: true, description: 'Next-gen, superior compression', group: 'Common Raster' },
-  { id: 'heif', label: 'HEIF', mimeType: 'image/heif', extension: '.heif', supportsQuality: true, supportsTransparency: false, description: 'Apple / HEVC based', group: 'Common Raster' },
-  { id: 'jxl', label: 'JPEG XL', mimeType: 'image/jxl', extension: '.jxl', supportsQuality: true, supportsTransparency: true, description: 'Next-gen JPEG replacement', group: 'Common Raster' },
+  // ── Common Raster (Canvas + FFmpeg) ────────────────────────
+  { id: 'jpeg', label: 'JPG', mimeType: 'image/jpeg', extension: '.jpg', supportsQuality: true, supportsTransparency: false, description: 'Lossy compression, smaller files', group: 'Common' },
+  { id: 'png', label: 'PNG', mimeType: 'image/png', extension: '.png', supportsQuality: false, supportsTransparency: true, description: 'Lossless, supports transparency', group: 'Common' },
+  { id: 'gif', label: 'GIF', mimeType: 'image/gif', extension: '.gif', supportsQuality: false, supportsTransparency: true, description: '256 colors, simple transparency', group: 'Common' },
+  { id: 'bmp', label: 'BMP', mimeType: 'image/bmp', extension: '.bmp', supportsQuality: false, supportsTransparency: false, description: 'Uncompressed bitmap', group: 'Common' },
+  { id: 'tiff', label: 'TIFF', mimeType: 'image/tiff', extension: '.tiff', supportsQuality: false, supportsTransparency: true, description: 'Lossless, professional use', group: 'Common' },
+  { id: 'webp', label: 'WebP', mimeType: 'image/webp', extension: '.webp', supportsQuality: true, supportsTransparency: true, description: 'Modern, excellent compression', group: 'Common' },
+  { id: 'avif', label: 'AVIF', mimeType: 'image/avif', extension: '.avif', supportsQuality: true, supportsTransparency: true, description: 'Next-gen, superior compression (Chrome/Firefox)', group: 'Common' },
 
-  // ── Vector / Document ──────────────────────────────────────
-  { id: 'svg', label: 'SVG', mimeType: 'image/svg+xml', extension: '.svg', supportsQuality: false, supportsTransparency: true, description: 'Scalable vector graphics', group: 'Vector' },
-  { id: 'eps', label: 'EPS', mimeType: 'application/postscript', extension: '.eps', supportsQuality: false, supportsTransparency: false, description: 'Encapsulated PostScript', group: 'Vector' },
-  { id: 'pdf', label: 'PDF', mimeType: 'application/pdf', extension: '.pdf', supportsQuality: false, supportsTransparency: false, description: 'Portable Document Format', group: 'Vector' },
-  { id: 'ai', label: 'AI', mimeType: 'application/illustrator', extension: '.ai', supportsQuality: false, supportsTransparency: false, description: 'Adobe Illustrator', group: 'Vector' },
-  { id: 'cdr', label: 'CDR', mimeType: 'application/cdr', extension: '.cdr', supportsQuality: false, supportsTransparency: false, description: 'CorelDRAW', group: 'Vector' },
-  { id: 'wmf', label: 'WMF', mimeType: 'image/wmf', extension: '.wmf', supportsQuality: false, supportsTransparency: false, description: 'Windows Metafile', group: 'Vector' },
-  { id: 'emf', label: 'EMF', mimeType: 'image/emf', extension: '.emf', supportsQuality: false, supportsTransparency: false, description: 'Enhanced Metafile', group: 'Vector' },
+  // ── Document / Vector ──────────────────────────────────────
+  { id: 'svg', label: 'SVG', mimeType: 'image/svg+xml', extension: '.svg', supportsQuality: false, supportsTransparency: true, description: 'SVG with embedded raster image', group: 'Document' },
+  { id: 'pdf', label: 'PDF', mimeType: 'application/pdf', extension: '.pdf', supportsQuality: false, supportsTransparency: false, description: 'Single-page PDF with embedded image', group: 'Document' },
+  { id: 'ico', label: 'ICO', mimeType: 'image/x-icon', extension: '.ico', supportsQuality: false, supportsTransparency: true, description: 'Windows icon format', group: 'Document' },
 
-  // ── Camera RAW ─────────────────────────────────────────────
-  { id: 'dng', label: 'DNG', mimeType: 'image/x-adobe-dng', extension: '.dng', supportsQuality: false, supportsTransparency: false, description: 'Adobe Digital Negative', group: 'Camera RAW' },
-  { id: 'cr2', label: 'CR2', mimeType: 'image/x-canon-cr2', extension: '.cr2', supportsQuality: false, supportsTransparency: false, description: 'Canon RAW', group: 'Camera RAW' },
-  { id: 'cr3', label: 'CR3', mimeType: 'image/x-canon-cr3', extension: '.cr3', supportsQuality: false, supportsTransparency: false, description: 'Canon RAW v3', group: 'Camera RAW' },
-  { id: 'nef', label: 'NEF', mimeType: 'image/x-nikon-nef', extension: '.nef', supportsQuality: false, supportsTransparency: false, description: 'Nikon RAW', group: 'Camera RAW' },
-  { id: 'arw', label: 'ARW', mimeType: 'image/x-sony-arw', extension: '.arw', supportsQuality: false, supportsTransparency: false, description: 'Sony RAW', group: 'Camera RAW' },
-  { id: 'raf', label: 'RAF', mimeType: 'image/x-fuji-raf', extension: '.raf', supportsQuality: false, supportsTransparency: false, description: 'Fujifilm RAW', group: 'Camera RAW' },
-  { id: 'orf', label: 'ORF', mimeType: 'image/x-olympus-orf', extension: '.orf', supportsQuality: false, supportsTransparency: false, description: 'Olympus RAW', group: 'Camera RAW' },
-  { id: 'rw2', label: 'RW2', mimeType: 'image/x-panasonic-rw2', extension: '.rw2', supportsQuality: false, supportsTransparency: false, description: 'Panasonic RAW', group: 'Camera RAW' },
-  { id: 'pef', label: 'PEF', mimeType: 'image/x-pentax-pef', extension: '.pef', supportsQuality: false, supportsTransparency: false, description: 'Pentax RAW', group: 'Camera RAW' },
-  { id: 'srw', label: 'SRW', mimeType: 'image/x-samsung-srw', extension: '.srw', supportsQuality: false, supportsTransparency: false, description: 'Samsung RAW', group: 'Camera RAW' },
+  // ── Legacy / Technical (FFmpeg) ────────────────────────────
+  { id: 'tga', label: 'TGA', mimeType: 'image/x-tga', extension: '.tga', supportsQuality: false, supportsTransparency: true, description: 'Targa format', group: 'Technical' },
+  { id: 'pcx', label: 'PCX', mimeType: 'image/x-pcx', extension: '.pcx', supportsQuality: false, supportsTransparency: false, description: 'PC Paintbrush', group: 'Technical' },
+  { id: 'ppm', label: 'PPM', mimeType: 'image/x-portable-pixmap', extension: '.ppm', supportsQuality: false, supportsTransparency: false, description: 'Portable Pixmap (color)', group: 'Technical' },
+  { id: 'pgm', label: 'PGM', mimeType: 'image/x-portable-graymap', extension: '.pgm', supportsQuality: false, supportsTransparency: false, description: 'Portable Graymap', group: 'Technical' },
+  { id: 'pbm', label: 'PBM', mimeType: 'image/x-portable-bitmap', extension: '.pbm', supportsQuality: false, supportsTransparency: false, description: 'Portable Bitmap (B&W)', group: 'Technical' },
+  { id: 'pnm', label: 'PNM', mimeType: 'image/x-portable-anymap', extension: '.pnm', supportsQuality: false, supportsTransparency: false, description: 'Portable Anymap', group: 'Technical' },
 
-  // ── Layered / Editing Project ──────────────────────────────
-  { id: 'psd', label: 'PSD', mimeType: 'image/vnd.adobe.photoshop', extension: '.psd', supportsQuality: false, supportsTransparency: true, description: 'Photoshop Document', group: 'Layered' },
-  { id: 'psb', label: 'PSB', mimeType: 'image/vnd.adobe.photoshop', extension: '.psb', supportsQuality: false, supportsTransparency: true, description: 'Photoshop Big', group: 'Layered' },
-  { id: 'xcf', label: 'XCF', mimeType: 'image/x-xcf', extension: '.xcf', supportsQuality: false, supportsTransparency: true, description: 'GIMP project', group: 'Layered' },
-  { id: 'kra', label: 'KRA', mimeType: 'application/x-krita', extension: '.kra', supportsQuality: false, supportsTransparency: true, description: 'Krita project', group: 'Layered' },
-  { id: 'afphoto', label: 'AFPHOTO', mimeType: 'application/x-affinity-photo', extension: '.afphoto', supportsQuality: false, supportsTransparency: true, description: 'Affinity Photo', group: 'Layered' },
-
-  // ── Icons / Cursors ────────────────────────────────────────
-  { id: 'ico', label: 'ICO', mimeType: 'image/x-icon', extension: '.ico', supportsQuality: false, supportsTransparency: true, description: 'Windows icon', group: 'Icons' },
-  { id: 'icns', label: 'ICNS', mimeType: 'image/x-icns', extension: '.icns', supportsQuality: false, supportsTransparency: true, description: 'macOS icon', group: 'Icons' },
-  { id: 'cur', label: 'CUR', mimeType: 'image/x-win-bitmap', extension: '.cur', supportsQuality: false, supportsTransparency: true, description: 'Windows cursor', group: 'Icons' },
-  { id: 'ani', label: 'ANI', mimeType: 'application/x-navi-animation', extension: '.ani', supportsQuality: false, supportsTransparency: true, description: 'Animated cursor', group: 'Icons' },
-
-  // ── Legacy / Less Common ───────────────────────────────────
-  { id: 'tga', label: 'TGA', mimeType: 'image/x-tga', extension: '.tga', supportsQuality: false, supportsTransparency: true, description: 'Targa format', group: 'Legacy' },
-  { id: 'pcx', label: 'PCX', mimeType: 'image/x-pcx', extension: '.pcx', supportsQuality: false, supportsTransparency: false, description: 'PC Paintbrush', group: 'Legacy' },
-  { id: 'ppm', label: 'PPM', mimeType: 'image/x-portable-pixmap', extension: '.ppm', supportsQuality: false, supportsTransparency: false, description: 'Portable Pixmap', group: 'Legacy' },
-  { id: 'pgm', label: 'PGM', mimeType: 'image/x-portable-graymap', extension: '.pgm', supportsQuality: false, supportsTransparency: false, description: 'Portable Graymap', group: 'Legacy' },
-  { id: 'pbm', label: 'PBM', mimeType: 'image/x-portable-bitmap', extension: '.pbm', supportsQuality: false, supportsTransparency: false, description: 'Portable Bitmap', group: 'Legacy' },
-  { id: 'pnm', label: 'PNM', mimeType: 'image/x-portable-anymap', extension: '.pnm', supportsQuality: false, supportsTransparency: false, description: 'Portable Anymap', group: 'Legacy' },
-  { id: 'iff', label: 'IFF', mimeType: 'image/x-ilbm', extension: '.iff', supportsQuality: false, supportsTransparency: false, description: 'Amiga ILBM', group: 'Legacy' },
-  { id: 'dds', label: 'DDS', mimeType: 'image/vnd-ms.dds', extension: '.dds', supportsQuality: false, supportsTransparency: true, description: 'DirectDraw Surface', group: 'Legacy' },
-
-  // ── Scientific / Medical / Pro ─────────────────────────────
-  { id: 'dcm', label: 'DICOM', mimeType: 'application/dicom', extension: '.dcm', supportsQuality: false, supportsTransparency: false, description: 'Medical imaging', group: 'Scientific' },
-  { id: 'fits', label: 'FITS', mimeType: 'image/fits', extension: '.fits', supportsQuality: false, supportsTransparency: false, description: 'Astronomy format', group: 'Scientific' },
-  { id: 'exr', label: 'EXR', mimeType: 'image/x-exr', extension: '.exr', supportsQuality: false, supportsTransparency: true, description: 'HDR / VFX format', group: 'Scientific' },
-  { id: 'hdr', label: 'HDR', mimeType: 'image/vnd.radiance', extension: '.hdr', supportsQuality: false, supportsTransparency: false, description: 'Radiance HDR', group: 'Scientific' },
-  { id: 'pfm-img', label: 'PFM', mimeType: 'image/x-pfm', extension: '.pfm', supportsQuality: false, supportsTransparency: false, description: 'Portable Float Map', group: 'Scientific' },
+  // ── HDR / Scientific (FFmpeg) ──────────────────────────────
+  { id: 'exr', label: 'EXR', mimeType: 'image/x-exr', extension: '.exr', supportsQuality: false, supportsTransparency: true, description: 'OpenEXR HDR / VFX format', group: 'HDR' },
+  { id: 'hdr', label: 'HDR', mimeType: 'image/vnd.radiance', extension: '.hdr', supportsQuality: false, supportsTransparency: false, description: 'Radiance HDR', group: 'HDR' },
 ];
 
 /* ── Video formats ─────────────────────────────────────────── */
@@ -105,15 +69,12 @@ export const VIDEO_FORMATS: readonly OutputFormat[] = [
   { id: 'avi', label: 'AVI', mimeType: 'video/x-msvideo', extension: '.avi', supportsQuality: true, description: 'Classic format, wide support', group: 'Common' },
   { id: 'mpeg', label: 'MPEG', mimeType: 'video/mpeg', extension: '.mpg', supportsQuality: true, description: 'MPEG-1/2 standard video', group: 'Common' },
   { id: 'm4v', label: 'M4V', mimeType: 'video/x-m4v', extension: '.m4v', supportsQuality: true, description: 'Apple MPEG-4 variant', group: 'Common' },
-  { id: 'wmv', label: 'WMV', mimeType: 'video/x-ms-wmv', extension: '.wmv', supportsQuality: true, description: 'Windows Media Video', group: 'Common' },
   { id: 'flv', label: 'FLV', mimeType: 'video/x-flv', extension: '.flv', supportsQuality: true, description: 'Flash Video (legacy)', group: 'Common' },
   { id: 'ogv', label: 'OGV', mimeType: 'video/ogg', extension: '.ogv', supportsQuality: true, description: 'Ogg Theora video', group: 'Common' },
   { id: '3gp', label: '3GP', mimeType: 'video/3gpp', extension: '.3gp', supportsQuality: true, description: 'Mobile / 3G video', group: 'Common' },
   // ── Broadcast / transport / disc ───────────────────────────
   { id: 'ts', label: 'TS', mimeType: 'video/mp2t', extension: '.ts', supportsQuality: true, description: 'MPEG transport stream', group: 'Broadcast' },
   { id: 'vob', label: 'VOB', mimeType: 'video/dvd', extension: '.vob', supportsQuality: true, description: 'DVD Video Object', group: 'Broadcast' },
-  // ── Professional / production ──────────────────────────────
-  { id: 'mxf', label: 'MXF', mimeType: 'application/mxf', extension: '.mxf', supportsQuality: true, description: 'Material Exchange Format', group: 'Professional' },
   // ── Animated image from video ──────────────────────────────
   { id: 'video-gif', label: 'GIF', mimeType: 'image/gif', extension: '.gif', supportsQuality: false, description: 'Animated GIF from video', group: 'Animated' },
 ];
@@ -123,8 +84,6 @@ export const VIDEO_FORMATS: readonly OutputFormat[] = [
 export const VIDEO_TO_ANIMATED_FORMATS: readonly OutputFormat[] = [
   { id: 'anim-gif', label: 'GIF', mimeType: 'image/gif', extension: '.gif', supportsQuality: false, description: 'Animated GIF, 256 colors' },
   { id: 'anim-apng', label: 'APNG', mimeType: 'image/apng', extension: '.apng', supportsQuality: false, description: 'Animated PNG, full color' },
-  { id: 'anim-webp', label: 'Animated WebP', mimeType: 'image/webp', extension: '.webp', supportsQuality: true, description: 'Animated WebP, good compression' },
-  { id: 'anim-avif', label: 'Animated AVIF', mimeType: 'image/avif', extension: '.avif', supportsQuality: true, description: 'Animated AVIF, next-gen' },
 ];
 
 /* ── Audio formats ─────────────────────────────────────────── */
@@ -140,7 +99,6 @@ export const AUDIO_FORMATS: readonly OutputFormat[] = [
   // ── Broadcast / Specialty ───────────────────────────────────
   { id: 'ac3', label: 'AC3', mimeType: 'audio/ac3', extension: '.ac3', supportsQuality: true, description: 'Dolby Digital surround', group: 'Broadcast' },
   { id: 'mp2', label: 'MP2', mimeType: 'audio/mpeg', extension: '.mp2', supportsQuality: true, description: 'MPEG Audio Layer 2, broadcast', group: 'Broadcast' },
-  { id: 'amr', label: 'AMR', mimeType: 'audio/amr', extension: '.amr', supportsQuality: false, description: 'Speech / voice codec', group: 'Broadcast' },
   // ── Lossless ────────────────────────────────────────────────
   { id: 'wav', label: 'WAV', mimeType: 'audio/wav', extension: '.wav', supportsQuality: false, description: 'Uncompressed PCM audio', group: 'Lossless' },
   { id: 'flac', label: 'FLAC', mimeType: 'audio/flac', extension: '.flac', supportsQuality: false, description: 'Lossless compression', group: 'Lossless' },
@@ -334,7 +292,7 @@ export type AppStatus =
   | 'error';
 
 /** Default quality for lossy formats (0–1) */
-export const DEFAULT_QUALITY = 0.85;
+export const DEFAULT_QUALITY = 1.0;
 
 /** File size limit warning threshold (bytes) */
 export const SIZE_WARNING_THRESHOLD = 100 * 1024 * 1024;

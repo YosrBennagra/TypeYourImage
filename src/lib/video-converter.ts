@@ -68,8 +68,6 @@ function buildVideoArgs(
       return ['-i', input, '-c:v', 'mpeg2video', '-q:v', String(Math.round(2 + (1 - quality) * 8)), '-c:a', 'mp2', '-y', output];
     case 'm4v':
       return ['-i', input, '-c:v', 'libx264', '-crf', crf, '-c:a', 'aac', '-y', output];
-    case 'wmv':
-      return ['-i', input, '-c:v', 'wmv2', '-q:v', String(Math.round(2 + (1 - quality) * 8)), '-c:a', 'wmav2', '-y', output];
     case 'flv':
       return ['-i', input, '-c:v', 'libx264', '-crf', crf, '-c:a', 'aac', '-y', output];
     case 'ogv':
@@ -90,14 +88,6 @@ function buildVideoArgs(
       return ['-i', input, '-vf', 'fps=12,scale=480:-1:flags=lanczos', '-loop', '0', '-y', output];
     case 'anim-apng':
       return ['-i', input, '-vf', 'fps=15,scale=480:-1:flags=lanczos', '-plays', '0', '-f', 'apng', '-y', output];
-    case 'anim-webp':
-      return ['-i', input, '-vf', 'fps=15,scale=480:-1:flags=lanczos',
-        '-c:v', 'libwebp', '-lossless', '0', '-q:v', String(Math.round(quality * 100)),
-        '-loop', '0', '-an', '-y', output];
-    case 'anim-avif':
-      return ['-i', input, '-vf', 'fps=15,scale=480:-1:flags=lanczos',
-        '-c:v', 'libaom-av1', '-crf', String(Math.round(63 - quality * 53)),
-        '-cpu-used', '8', '-an', '-y', output];
     default:
       return ['-i', input, '-y', output];
   }

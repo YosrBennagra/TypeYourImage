@@ -3,7 +3,15 @@ import { fetchFile } from '@ffmpeg/util';
 import { getFFmpeg, getFileExtension } from './ffmpeg-loader';
 
 /** Formats that can be produced natively via the HTML Canvas API */
-const CANVAS_FORMATS = new Set(['png', 'jpeg', 'webp']);
+const CANVAS_FORMATS = new Set(['png', 'jpeg', 'webp', 'avif']);
+
+/** Formats handled by custom converters (not FFmpeg) */
+const CUSTOM_FORMATS = new Set(['svg', 'pdf']);
+
+/** Check whether a format ID is handled by a custom (non-FFmpeg) converter */
+export function isCustomFormat(formatId: string): boolean {
+  return CUSTOM_FORMATS.has(formatId);
+}
 
 /** Check whether a format ID can be handled by the canvas fast-path */
 export function isCanvasFormat(formatId: string): boolean {
@@ -36,7 +44,8 @@ export function loadImage(file: File): Promise<HTMLImageElement> {
 
 /**
  * Convert an image to the specified output format.
- * Uses Canvas for PNG/JPEG/WebP when the source loaded as an HTMLImageElement.
+ * Uses Canvas for PNG/JPEG/WebP/AVIF when the source loaded as an HTMLImageElement.
+ * Uses custom converters for SVG and PDF.
  * Falls back to FFmpeg.wasm for all other formats.
  */
 export async function convertImage(
@@ -46,9 +55,19 @@ export async function convertImage(
   quality: number,
   onProgress?: (progress: number) => void,
 ): Promise<Blob> {
+  // Custom converters (SVG, PDF) — need an img element or we render from file
+  if (CUSTOM_FORMATS.has(format.id)) {
+    const imgEl = img ?? await loadImage(sourceFile);
+    if (format.id === 'svg') return convertToSvg(imgEl, sourceFile);
+    if (format.id === 'pdf') return convertToPdf(imgEl, sourceFile);
+  }
+
+  // Canvas path (PNG, JPEG, WebP, AVIF)
   if (img && isCanvasFormat(format.id)) {
     return convertImageCanvas(img, format, quality);
   }
+
+  // FFmpeg path for all other formats
   return convertImageFFmpeg(sourceFile, format, quality, onProgress);
 }
 
@@ -81,10 +100,17 @@ function convertImageCanvas(
 
     canvas.toBlob(
       (blob) => {
-        if (blob) {
+        if (blob && blob.size > 0) {
           resolve(blob);
         } else {
-          reject(new Error(`Conversion to ${format.label} failed`));
+          // AVIF / WebP may not be supported in all browsers
+          const hint =
+            format.id === 'avif'
+              ? ' Your browser may not support AVIF encoding. Try Chrome 116+ or Firefox 113+.'
+              : format.id === 'webp'
+                ? ' Your browser may not support WebP encoding.'
+                : '';
+          reject(new Error(`Conversion to ${format.label} failed.${hint}`));
         }
       },
       format.mimeType,
@@ -142,12 +168,6 @@ function buildImageArgs(
       return ['-i', input, '-q:v', String(Math.round(31 - quality * 29)), '-y', output];
     case 'webp':
       return ['-i', input, '-quality', String(Math.round(quality * 100)), '-y', output];
-    case 'avif':
-      return ['-i', input, '-c:v', 'libaom-av1', '-crf', String(Math.round(63 - quality * 53)), '-still-picture', '1', '-y', output];
-    case 'heif':
-      return ['-i', input, '-c:v', 'libx265', '-crf', String(Math.round(51 - quality * 41)), '-y', output];
-    case 'jxl':
-      return ['-i', input, '-y', output];
     default:
       return ['-i', input, '-y', output];
   }
@@ -178,4 +198,135 @@ export function downloadBlob(blob: Blob, filename: string): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/* ─── Custom converters for formats Canvas/FFmpeg can't handle ───── */
+
+/** Render an image element to a PNG data URL via Canvas */
+function renderToCanvas(img: HTMLImageElement): HTMLCanvasElement {
+  const canvas = document.createElement('canvas');
+  canvas.width = img.naturalWidth || img.width;
+  canvas.height = img.naturalHeight || img.height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('Canvas 2D context unavailable');
+  ctx.drawImage(img, 0, 0);
+  return canvas;
+}
+
+/** Convert raster image → SVG (embeds the image as base64 inside an SVG wrapper) */
+async function convertToSvg(img: HTMLImageElement, _file: File): Promise<Blob> {
+  const canvas = renderToCanvas(img);
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Get PNG data URL for embedding
+  const dataUrl = canvas.toDataURL('image/png');
+
+  const svg = [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"`,
+    `     width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`,
+    `  <image width="${w}" height="${h}" href="${dataUrl}" />`,
+    `</svg>`,
+  ].join('\n');
+
+  return new Blob([svg], { type: 'image/svg+xml' });
+}
+
+/** Convert raster image → PDF (minimal single-page PDF with embedded JPEG) */
+async function convertToPdf(img: HTMLImageElement, _file: File): Promise<Blob> {
+  const canvas = renderToCanvas(img);
+  const w = canvas.width;
+  const h = canvas.height;
+
+  // Get JPEG binary for smaller PDF size
+  const jpegBlob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Failed to render image for PDF'))),
+      'image/jpeg',
+      0.92,
+    );
+  });
+
+  const jpegData = new Uint8Array(await jpegBlob.arrayBuffer());
+
+  // Build a minimal valid PDF 1.4
+  const encoder = new TextEncoder();
+  const parts: (string | Uint8Array)[] = [];
+  const offsets: number[] = [];
+  let pos = 0;
+
+  const addText = (text: string) => {
+    const bytes = encoder.encode(text);
+    parts.push(bytes);
+    pos += bytes.length;
+  };
+
+  const addBinary = (data: Uint8Array) => {
+    parts.push(data);
+    pos += data.length;
+  };
+
+  const recordOffset = () => {
+    offsets.push(pos);
+  };
+
+  // Header
+  addText('%PDF-1.4\n%\xC0\xC1\xC2\xC3\n');
+
+  // Obj 1: Catalog
+  recordOffset();
+  addText('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+
+  // Obj 2: Pages
+  recordOffset();
+  addText('2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n');
+
+  // Obj 3: Page — scale to 72 DPI, max 595x842 (A4ish) while preserving aspect ratio
+  const scale = Math.min(595 / w, 842 / h, 1);
+  const pw = w * scale;
+  const ph = h * scale;
+  recordOffset();
+  addText(
+    `3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pw.toFixed(2)} ${ph.toFixed(2)}] ` +
+    `/Contents 4 0 R /Resources << /XObject << /Img 5 0 R >> >> >>\nendobj\n`,
+  );
+
+  // Obj 4: Content stream (draw image to fill page)
+  const stream = `q\n${pw.toFixed(2)} 0 0 ${ph.toFixed(2)} 0 0 cm\n/Img Do\nQ\n`;
+  recordOffset();
+  addText(`4 0 obj\n<< /Length ${stream.length} >>\nstream\n${stream}endstream\nendobj\n`);
+
+  // Obj 5: Image XObject (DCTDecode = JPEG)
+  recordOffset();
+  addText(
+    `5 0 obj\n<< /Type /XObject /Subtype /Image /Width ${w} /Height ${h} ` +
+    `/ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode ` +
+    `/Length ${jpegData.length} >>\nstream\n`,
+  );
+  addBinary(jpegData);
+  addText('\nendstream\nendobj\n');
+
+  // XRef table
+  const xrefPos = pos;
+  addText(`xref\n0 ${offsets.length + 1}\n`);
+  addText('0000000000 65535 f \n');
+  for (const offset of offsets) {
+    addText(`${String(offset).padStart(10, '0')} 00000 n \n`);
+  }
+
+  // Trailer
+  addText(`trailer\n<< /Size ${offsets.length + 1} /Root 1 0 R >>\nstartxref\n${xrefPos}\n%%EOF\n`);
+
+  // Assemble
+  const totalSize = parts.reduce((s, p) => s + (typeof p === 'string' ? encoder.encode(p).length : p.length), 0);
+  const result = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const part of parts) {
+    const bytes = part instanceof Uint8Array ? part : encoder.encode(part as string);
+    result.set(bytes, offset);
+    offset += bytes.length;
+  }
+
+  return new Blob([result], { type: 'application/pdf' });
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, useRef } from 'react';
-import { FiRefreshCw, FiZap, FiLoader } from 'react-icons/fi';
+import { FiRefreshCw, FiZap, FiLoader, FiLock, FiArrowRight, FiMusic, FiFileText, FiFilm } from 'react-icons/fi';
 import {
   type OutputFormat,
   type AppStatus,
@@ -9,7 +9,7 @@ import {
   getCategoryConfig,
   SIZE_WARNING_THRESHOLD,
 } from './lib/constants';
-import { loadImage, convertImage, isCanvasFormat, downloadBlob, getBaseName } from './lib/converter';
+import { loadImage, convertImage, isCanvasFormat, isCustomFormat, downloadBlob, getBaseName } from './lib/converter';
 import { convertVideo } from './lib/video-converter';
 import { convertAudio } from './lib/audio-converter';
 import { convertSubtitle } from './lib/subtitle-converter';
@@ -17,7 +17,7 @@ import { convertData } from './lib/data-converter';
 import { isFFmpegLoaded, getFFmpeg } from './lib/ffmpeg-loader';
 import { CategoryTabs } from './components/category-tabs';
 import { DropZone } from './components/drop-zone';
-import { SourcePreview } from './components/source-preview';
+// SourcePreview not used in compact workspace layout
 import { FormatSelector } from './components/format-selector';
 import { QualitySlider } from './components/quality-slider';
 import { StepIndicator } from './components/step-indicator';
@@ -211,14 +211,15 @@ export default function App() {
 
       if (source.category === 'image') {
         const useCanvas = isCanvasFormat(selectedFormat.id) && !!source.imageElement;
+        const useCustom = isCustomFormat(selectedFormat.id);
 
-        if (useCanvas) {
+        if (useCanvas || useCustom) {
           setStatus('converting');
         } else if (!isFFmpegLoaded()) {
           setStatus('loading-engine');
         }
 
-        const progressCallback = useCanvas
+        const progressCallback = (useCanvas || useCustom)
           ? undefined
           : (p: number) => {
             setStatus('converting');
@@ -549,218 +550,238 @@ export default function App() {
           </div>
         ) : (
           /* ── Workspace ───────────────────────────────── */
-          <div className="max-w-2xl mx-auto flex flex-col gap-4 p-5 pt-6">
-            {/* Source: compact horizontal card */}
-            <div className="glass-card p-4 animate-fade-in">
-              <div className="flex items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <h2 className="section-title mb-3">Source File</h2>
-                  <SourcePreview
-                    file={source.file}
-                    previewUrl={source.previewUrl}
-                    category={source.category}
-                    dimensions={source.dimensions}
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  className="shrink-0 text-xs text-zinc-600 hover:text-zinc-300 transition-colors mt-1"
-                >
-                  Change file
-                </button>
-              </div>
+          <div className="h-[calc(100vh-3.5rem)] flex flex-col overflow-hidden">
 
-              {showSizeWarning && (
-                <div className="mt-3 px-3 py-2 rounded-lg bg-neon-yellow/[0.05] border border-neon-yellow/15">
-                  <p className="text-xs text-neon-yellow/70">
-                    Large file — conversion may take a while
-                  </p>
-                </div>
-              )}
-            </div>
+            {/* Main area: two columns — format picker left, configure right */}
+            <div className="flex-1 flex flex-col lg:flex-row min-h-0 overflow-hidden">
 
-            {/* Format selector */}
-            <div className="glass-card p-5 animate-fade-in">
-              <h2 className="section-title mb-4">Output Format</h2>
-              <FormatSelector
-                category={source.category}
-                selected={selectedFormat}
-                onSelect={(fmt) => {
-                  setSelectedFormat(fmt);
-                  setResult(null);
-                  setError(null);
-                  setStatus('ready');
-                }}
-                sourceFormat={source.file.type}
-              />
-            </div>
-
-            {/* Options */}
-            {selectedFormat && (
-              <div className="glass-card p-5 space-y-3 animate-fade-in">
-                {selectedFormat.supportsQuality && (
-                  <QualitySlider quality={quality} onChange={setQuality} />
-                )}
-
-                {source.category === 'image' && (
-                  <TransparencyNotice
-                    sourceHasAlpha={source.hasAlpha ?? false}
-                    targetFormat={selectedFormat}
-                  />
-                )}
-
-                <FormatNotes format={selectedFormat} category={source.category} />
-
-                {!selectedFormat.supportsQuality && (
-                  <p className="text-xs text-zinc-600">
-                    No quality settings for {selectedFormat.label}.
-                  </p>
-                )}
-              </div>
-            )}
-
-            {/* Convert button */}
-            {selectedFormat && !result && (
-              <button
-                type="button"
-                onClick={handleConvert}
-                disabled={status === 'converting' || status === 'loading-engine'}
-                className="convert-btn"
-              >
-                {status === 'loading-engine' ? (
-                  <>
-                    <FiLoader className="w-4 h-4 animate-spinner" />
-                    Loading engine…
-                  </>
-                ) : status === 'converting' ? (
-                  <>
-                    <FiLoader className="w-4 h-4 animate-spinner" />
-                    Converting…
-                  </>
-                ) : (
-                  <>
-                    <FiZap className="w-4 h-4" />
-                    Convert to {selectedFormat.label}
-                  </>
-                )}
-              </button>
-            )}
-
-            {/* Progress */}
-            {status === 'converting' && (source.category !== 'image' || (!source.imageElement || !isCanvasFormat(selectedFormat?.id ?? ''))) && (
-              <ProgressBar progress={conversionProgress} label="Processing" />
-            )}
-
-            {status === 'loading-engine' && (
-              <p className="text-xs text-zinc-600 text-center">
-                Downloading engine (~30 MB, one-time)…
-              </p>
-            )}
-
-            {/* Result */}
-            {result && (
-              <div className="glass-card-success p-5 animate-fade-in">
-                <ConversionResult
-                  originalSize={source.file.size}
-                  convertedSize={result.blob.size}
-                  format={result.format}
-                  onDownload={handleDownload}
-                  isDownloading={isDownloading}
-                  conversionTimeMs={conversionTimeMs}
-                  onCopyToClipboard={
-                    source.category === 'image' && result.format.mimeType === 'image/png'
-                      ? handleCopyToClipboard
-                      : undefined
-                  }
-                />
-                <button
-                  type="button"
-                  onClick={handleConvertAnother}
-                  className="mt-3 w-full text-xs text-zinc-600 hover:text-zinc-300 text-center transition-colors"
-                >
-                  Convert to another format
-                </button>
-              </div>
-            )}
-
-            {/* Error */}
-            {error && (
-              <div className="glass-card-error p-5 animate-fade-in">
-                <p className="text-sm text-red-400">{error}</p>
-                <button
-                  type="button"
-                  onClick={() => {
+              {/* Left: format selector (scrollable if needed) */}
+              <div className="flex-1 min-w-0 overflow-y-auto p-5 border-b lg:border-b-0 lg:border-r border-white/[0.04]">
+                <FormatSelector
+                  category={source.category}
+                  selected={selectedFormat}
+                  onSelect={(fmt) => {
+                    setSelectedFormat(fmt);
+                    setResult(null);
                     setError(null);
                     setStatus('ready');
                   }}
-                  className="mt-2 text-xs text-zinc-600 hover:text-zinc-300 transition-colors"
-                >
-                  Dismiss
-                </button>
+                  sourceFormat={source.file.type}
+                />
               </div>
-            )}
 
-            {/* Converted preview (image) */}
-            {result && source.category === 'image' && (
-              <div className="glass-card p-5 animate-fade-in">
-                <h2 className="section-title mb-3">Preview</h2>
-                <div className="flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-white/[0.05]">
-                  <img
-                    src={URL.createObjectURL(result.blob)}
-                    alt="Converted"
-                    className="max-w-full max-h-40 object-contain"
-                  />
+              {/* Right: Configure panel */}
+              <div className="shrink-0 lg:w-[320px] xl:w-[360px] flex flex-col overflow-y-auto">
+
+                {/* Source preview block */}
+                <div className="p-5 border-b border-white/[0.04]">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-[10px] uppercase tracking-widest text-zinc-600">Source</span>
+                    <button
+                      type="button"
+                      onClick={handleReset}
+                      className="text-[11px] text-zinc-600 hover:text-zinc-300 transition-colors"
+                    >
+                      Change file
+                    </button>
+                  </div>
+
+                  {/* Image thumbnail */}
+                  {source.category === 'image' && source.previewUrl && (
+                    <div className="rounded-lg overflow-hidden checkerboard border border-white/[0.05] mb-3 flex items-center justify-center" style={{ maxHeight: '130px' }}>
+                      <img src={source.previewUrl} alt="" className="max-w-full max-h-[130px] object-contain" />
+                    </div>
+                  )}
+
+                  {/* Video thumbnail */}
+                  {(source.category === 'video' || source.category === 'video-to-audio' || source.category === 'video-to-animated') && (
+                    <div className="rounded-lg border border-white/[0.05] bg-black/30 mb-3 flex items-center justify-center overflow-hidden" style={{ height: '90px' }}>
+                      <video src={source.previewUrl} className="max-w-full max-h-full" />
+                    </div>
+                  )}
+
+                  {/* Audio */}
+                  {source.category === 'audio' && (
+                    <div className="rounded-lg border border-white/[0.05] bg-black/20 mb-3 flex flex-col items-center justify-center gap-2.5 py-4">
+                      <FiMusic className="w-6 h-6 text-neon-purple/50" />
+                      <audio src={source.previewUrl} controls className="w-full h-8 opacity-70"><track kind="captions" /></audio>
+                    </div>
+                  )}
+
+                  {/* Subtitle / Data — just icon */}
+                  {(source.category === 'subtitle' || source.category === 'data') && (
+                    <div className="rounded-lg border border-white/[0.05] bg-black/20 mb-3 flex items-center justify-center" style={{ height: '70px' }}>
+                      <FiFileText className="w-8 h-8 text-zinc-700" />
+                    </div>
+                  )}
+
+                  {/* File metadata */}
+                  <p className="text-sm text-zinc-300 font-medium truncate" title={source.file.name}>
+                    {source.file.name}
+                  </p>
+                  <p className="text-[11px] text-zinc-600 mt-0.5">
+                    {source.dimensions ? `${source.dimensions.width} × ${source.dimensions.height}  ·  ` : ''}
+                    {source.file.size >= 1_000_000
+                      ? `${(source.file.size / 1_000_000).toFixed(1)} MB`
+                      : `${Math.round(source.file.size / 1000)} KB`}
+                    {'  ·  '}{(source.file.name.split('.').pop() ?? '').toUpperCase()}
+                  </p>
+                  {showSizeWarning && (
+                    <p className="text-[10px] text-neon-yellow/60 mt-1">Large file — conversion may take a while</p>
+                  )}
+                </div>
+
+                {/* Configure section */}
+                <div className="flex-1 flex flex-col gap-3 p-5">
+
+                  {/* No format selected — info cards */}
+                  {!selectedFormat && !result && (
+                    <>
+                      <p className="text-[11px] text-zinc-600 flex items-center gap-1.5">
+                        <FiArrowRight className="w-3 h-3 rotate-180 shrink-0" />
+                        Choose an output format on the left
+                      </p>
+                      <div className="space-y-2 mt-1">
+                        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3.5">
+                          <div className="flex items-start gap-2.5">
+                            <FiLock className="w-3.5 h-3.5 text-neon-green/60 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-xs text-zinc-300 font-medium mb-0.5">100% local processing</p>
+                              <p className="text-[11px] text-zinc-600 leading-relaxed">Files never leave your browser. No uploads, no servers, no logs.</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3.5">
+                          <div className="flex items-start gap-2.5">
+                            <FiZap className="w-3.5 h-3.5 text-neon-cyan/60 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-xs text-zinc-300 font-medium mb-0.5">Fast conversion</p>
+                              <p className="text-[11px] text-zinc-600 leading-relaxed">Most formats convert instantly using your browser's built-in APIs and GPU.</p>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3.5">
+                          <div className="flex items-start gap-2.5">
+                            <FiFilm className="w-3.5 h-3.5 text-neon-purple/60 shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-xs text-zinc-300 font-medium mb-0.5">200+ formats</p>
+                              <p className="text-[11px] text-zinc-600 leading-relaxed">Images, video, audio, subtitles, and data formats — all in one place.</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {/* Format selected — output label + options */}
+                  {selectedFormat && !result && (
+                    <div className="space-y-3">
+                      <div>
+                        <span className="text-[10px] uppercase tracking-widest text-zinc-600 block mb-1.5">Output</span>
+                        <div className="flex items-center gap-2">
+                          <FiArrowRight className="w-3.5 h-3.5 text-neon-cyan/50 shrink-0" />
+                          <span className="text-sm font-semibold text-zinc-200">{selectedFormat.label}</span>
+                          <span className="text-[10px] text-zinc-700 ml-auto font-mono">.{selectedFormat.id}</span>
+                        </div>
+                      </div>
+                      {selectedFormat.supportsQuality && (
+                        <QualitySlider quality={quality} onChange={setQuality} />
+                      )}
+                      {source.category === 'image' && (
+                        <TransparencyNotice sourceHasAlpha={source.hasAlpha ?? false} targetFormat={selectedFormat} />
+                      )}
+                      <FormatNotes format={selectedFormat} category={source.category} />
+                    </div>
+                  )}
+
+                  {/* Convert button */}
+                  {selectedFormat && !result && (
+                    <button
+                      type="button"
+                      onClick={handleConvert}
+                      disabled={status === 'converting' || status === 'loading-engine'}
+                      className="convert-btn mt-auto"
+                    >
+                      {status === 'loading-engine' ? (
+                        <><FiLoader className="w-4 h-4 animate-spinner" /> Loading engine…</>
+                      ) : status === 'converting' ? (
+                        <><FiLoader className="w-4 h-4 animate-spinner" /> Converting…</>
+                      ) : (
+                        <><FiZap className="w-4 h-4" /> Convert to {selectedFormat.label}</>
+                      )}
+                    </button>
+                  )}
+
+                  {/* Progress */}
+                  {status === 'converting' && (source.category !== 'image' || (!source.imageElement || (!isCanvasFormat(selectedFormat?.id ?? '') && !isCustomFormat(selectedFormat?.id ?? '')))) && (
+                    <ProgressBar progress={conversionProgress} label="Processing" />
+                  )}
+                  {status === 'loading-engine' && (
+                    <p className="text-xs text-zinc-600 text-center">Downloading engine (~30 MB, one-time)…</p>
+                  )}
+
+                  {/* Result */}
+                  {result && (
+                    <div className="glass-card-success p-4 animate-fade-in">
+                      <ConversionResult
+                        originalSize={source.file.size}
+                        convertedSize={result.blob.size}
+                        format={result.format}
+                        onDownload={handleDownload}
+                        isDownloading={isDownloading}
+                        conversionTimeMs={conversionTimeMs}
+                        onCopyToClipboard={
+                          source.category === 'image' && result.format.mimeType === 'image/png'
+                            ? handleCopyToClipboard : undefined
+                        }
+                      />
+                      <button
+                        type="button"
+                        onClick={handleConvertAnother}
+                        className="mt-2 w-full text-xs text-zinc-600 hover:text-zinc-300 text-center transition-colors"
+                      >
+                        Convert to another format
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Error */}
+                  {error && (
+                    <div className="glass-card-error p-4 animate-fade-in">
+                      <p className="text-sm text-red-400">{error}</p>
+                      <button type="button" onClick={() => { setError(null); setStatus('ready'); }}
+                        className="mt-1.5 text-xs text-zinc-600 hover:text-zinc-300 transition-colors">
+                        Dismiss
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Compact result previews */}
+                  {result && source.category === 'image' && (
+                    <div className="rounded-xl overflow-hidden checkerboard border border-white/[0.05]">
+                      <img src={URL.createObjectURL(result.blob)} alt="Converted" className="max-w-full max-h-28 object-contain mx-auto" />
+                    </div>
+                  )}
+                  {result && source.category === 'video' && !result.format.mimeType.startsWith('image/') && (
+                    <video src={URL.createObjectURL(result.blob)} controls className="max-w-full max-h-28 rounded-lg">
+                      <track kind="captions" />
+                    </video>
+                  )}
+                  {result && (source.category === 'video-to-animated' || (source.category === 'video' && result.format.mimeType.startsWith('image/'))) && (
+                    <div className="rounded-xl overflow-hidden checkerboard border border-white/[0.05]">
+                      <img src={URL.createObjectURL(result.blob)} alt="Animated" className="max-w-full max-h-28 object-contain mx-auto" />
+                    </div>
+                  )}
+                  {result && (source.category === 'audio' || source.category === 'video-to-audio') && (
+                    <audio src={URL.createObjectURL(result.blob)} controls className="w-full"><track kind="captions" /></audio>
+                  )}
+                  {result && (source.category === 'subtitle' || source.category === 'data') && (
+                    <TextPreview blob={result.blob} />
+                  )}
+
                 </div>
               </div>
-            )}
-
-            {/* Converted preview (video) */}
-            {result && source.category === 'video' && !result.format.mimeType.startsWith('image/') && (
-              <div className="glass-card p-5 animate-fade-in">
-                <h2 className="section-title mb-3">Preview</h2>
-                <video
-                  src={URL.createObjectURL(result.blob)}
-                  controls
-                  className="max-w-full max-h-40 rounded-lg"
-                >
-                  <track kind="captions" />
-                </video>
-              </div>
-            )}
-
-            {/* Converted preview (animated image from video) */}
-            {result && (source.category === 'video-to-animated' || (source.category === 'video' && result.format.mimeType.startsWith('image/'))) && (
-              <div className="glass-card p-5 animate-fade-in">
-                <h2 className="section-title mb-3">Preview</h2>
-                <div className="flex items-center justify-center rounded-lg overflow-hidden checkerboard border border-white/[0.05]">
-                  <img
-                    src={URL.createObjectURL(result.blob)}
-                    alt="Animated"
-                    className="max-w-full max-h-40 object-contain"
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Converted preview (audio or video-to-audio) */}
-            {result && (source.category === 'audio' || source.category === 'video-to-audio') && (
-              <div className="glass-card p-5 animate-fade-in">
-                <h2 className="section-title mb-3">Preview</h2>
-                <audio
-                  src={URL.createObjectURL(result.blob)}
-                  controls
-                  className="w-full"
-                >
-                  <track kind="captions" />
-                </audio>
-              </div>
-            )}
-
-            {/* Converted preview (subtitle / data — text) */}
-            {result && (source.category === 'subtitle' || source.category === 'data') && (
-              <TextPreview blob={result.blob} />
-            )}
+            </div>
           </div>
         )}
       </main>
